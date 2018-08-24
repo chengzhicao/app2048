@@ -7,6 +7,7 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Point;
 import android.graphics.PointF;
 import android.graphics.RectF;
 import android.graphics.Typeface;
@@ -22,6 +23,7 @@ import android.widget.Toast;
 import com.cheng.app2048.R;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
@@ -33,13 +35,15 @@ public class View2048 extends GridLayout {
     private Random random = new Random();
     private final String TEXT_COLOR_WRITE = "#f9f6f2";
     private final String TEXT_COLOR_BLACK = "#776E65";
-    private SparseArray<String> colors = new SparseArray<>(12);
-    private SparseIntArray backgrounds = new SparseIntArray(12);
+    private final int COLOR_COUNTS = 12;
+    private final int CACHE_COUNTS = 3;//缓存数量
+    private SparseArray<String> colors = new SparseArray<>(COLOR_COUNTS);
+    private SparseIntArray backgrounds = new SparseIntArray(COLOR_COUNTS);
 
     /**
      * textView的背景集合
      */
-    private SparseArray<ColorDrawable> drawables = new SparseArray<>(12);
+    private SparseArray<ColorDrawable> drawables = new SparseArray<>(COLOR_COUNTS);
 
     /**
      * 行数
@@ -52,20 +56,30 @@ public class View2048 extends GridLayout {
     private int columnCounts = 4;
 
     /**
+     * 不能移动的数量
+     */
+    private int fixedNum = 1;
+
+    /**
      * 数据模型，映射各textView，所有的数值变化都是发生在模型中
      */
-    private int[][] model;
-//    private int[][] model = new int[][]{{16, 2, 4, 1}, {2, 0, 2, 4}, {0, 2, 2, 1}, {2048, 2048, 2048, 2048}};
+    private int[][] model = new int[rowCounts][columnCounts];
+//    private int[][] model = new int[][]{{0, 2, 0, 0}, {0, 0, 2, 1}, {0, 1, 1, 0}, {0, 0, 0, 0}};
 
     /**
      * 上一次的mode值，用于返回上次
      */
-    private int[][] oldModel;
+    private List<int[][]> cacheModel = new ArrayList<>();
+
+    /**
+     * 移动之前时的model
+     */
+    private int[][] beforeModel = new int[rowCounts][columnCounts];
 
     /**
      * textView集合，用于移动时交换位置
      */
-    private SparseArray<TextView> tvs;
+    private SparseArray<TextView> tvs = new SparseArray<>(rowCounts * columnCounts);
 
     /**
      * textView之间间隔
@@ -90,7 +104,7 @@ public class View2048 extends GridLayout {
     /**
      * 记录textView的坐标点，在onLayout时确定，之后不再改变
      */
-    private PointF[] pointFS;
+    private PointF[] pointFS = new PointF[rowCounts * columnCounts];
 
     /**
      * 是否已经布局
@@ -100,7 +114,7 @@ public class View2048 extends GridLayout {
     /**
      * 动画集合，手指抬起时遍历模型，遍历完之后再去执行动画
      */
-    private ArrayList<Animator> animators;
+    private ArrayList<Animator> animators = new ArrayList<>(rowCounts * columnCounts);
 
     /**
      * 延X轴方向平移
@@ -118,9 +132,14 @@ public class View2048 extends GridLayout {
     private boolean isModelChange;
 
     /**
+     * 模型中的坐标集合
+     */
+    private List<Point> modelPoints = new ArrayList<>(rowCounts * columnCounts);
+
+    /**
      * 值为0的模型坐标集合
      */
-    private List<String> zeroInModels;
+    private List<Point> zeroModelPoints = new ArrayList<>(rowCounts * columnCounts);
 
     public View2048(Context context) {
         this(context, null);
@@ -141,13 +160,12 @@ public class View2048 extends GridLayout {
     }
 
     private void init() {
-        model = new int[rowCounts][columnCounts];
-        oldModel = new int[rowCounts][columnCounts];
-        tvs = new SparseArray<>(rowCounts * columnCounts);
-        pointFS = new PointF[rowCounts * columnCounts];
-        animators = new ArrayList<>(rowCounts * columnCounts);
-        zeroInModels = new ArrayList<>(rowCounts * columnCounts);
-        randomNum();
+        for (int i = 0; i < rowCounts; i++) {
+            for (int j = 0; j < columnCounts; j++) {
+                modelPoints.add(new Point(i, j));
+            }
+        }
+        produceInitNum();
         //设置行列
         setRowCount(rowCounts);
         setColumnCount(columnCounts);
@@ -155,7 +173,7 @@ public class View2048 extends GridLayout {
             for (int j = 0; j < columnCounts; j++) {
                 TextView textView = new TextView(mContext);
                 if (model[i][j] > 1) {
-                    textView.setText(model[i][j] + "");
+                    textView.setText(String.valueOf(model[i][j]));
                 }
 //                if (drawables.get(model[i][j]) == null) {
 //                    drawables.put(model[i][j], new ColorDrawable(Color.parseColor(colors.get(model[i][j]))));
@@ -178,18 +196,21 @@ public class View2048 extends GridLayout {
     }
 
     /**
-     * 随机在model中产生两个值为2的数
+     * 生产初始值
      */
-    private void randomNum() {
-        int row1 = 0, row2 = 0, col1 = 0, col2 = 0;
-        while (row1 == row2 && col1 == col2) {
-            row1 = random.nextInt(rowCounts);
-            row2 = random.nextInt(rowCounts);
-            col1 = random.nextInt(columnCounts);
-            col2 = random.nextInt(columnCounts);
+    private void produceInitNum() {
+        for (int i = 0; i < fixedNum + 2; i++) {
+            int index = random.nextInt(modelPoints.size());
+            Point point = modelPoints.get(index);
+            int row = point.x;
+            int col = point.y;
+            if (i < 2) {//产生初始数字
+                model[row][col] = 2;
+            } else {//产生固定数
+                model[row][col] = 1;
+            }
+            modelPoints.remove(index);
         }
-        model[row1][col1] = 2;
-        model[row2][col2] = 2;
     }
 
     /**
@@ -228,27 +249,28 @@ public class View2048 extends GridLayout {
     @Override
     protected void onMeasure(int widthSpec, int heightSpec) {
         super.onMeasure(widthSpec, heightSpec);
-        int width = 1000, height = 1000;
+        int width = 800, height = 800;
         if (MeasureSpec.getMode(widthSpec) == MeasureSpec.EXACTLY) {
             width = MeasureSpec.getSize(widthSpec);
         }
         if (MeasureSpec.getMode(heightSpec) == MeasureSpec.EXACTLY) {
             height = MeasureSpec.getSize(heightSpec);
         }
-        //宽取最小值
-        viewWidth = width > height ? height : width;
-        blockSideLength = (viewWidth - space * 2 - columnCounts * 2 * space) / columnCounts;
-        if (rowCounts == columnCounts) {
-            viewHeight = viewWidth;
+        if ((float) rowCounts / columnCounts > (float) height / width) {
+            viewHeight = height;
+            blockSideLength = (viewHeight - space * 2 - rowCounts * 2 * space) / rowCounts;
+            viewWidth = columnCounts * blockSideLength + columnCounts * 2 * space + 2 * space;
         } else {
+            viewWidth = width;
+            blockSideLength = (viewWidth - space * 2 - columnCounts * 2 * space) / columnCounts;
             viewHeight = rowCounts * blockSideLength + rowCounts * 2 * space + 2 * space;
         }
         for (int i = 0; i < getChildCount(); i++) {
             LayoutParams layoutParams = (LayoutParams) getChildAt(i).getLayoutParams();
-            layoutParams.width = blockSideLength;
-            layoutParams.height = blockSideLength;
             layoutParams.setMargins(space, space, space, space);
             getChildAt(i).setLayoutParams(layoutParams);
+            getChildAt(i).measure(MeasureSpec.makeMeasureSpec(blockSideLength, MeasureSpec.EXACTLY),
+                    MeasureSpec.makeMeasureSpec(blockSideLength, MeasureSpec.EXACTLY));
         }
         setMeasuredDimension(viewWidth, viewHeight);
     }
@@ -342,16 +364,10 @@ public class View2048 extends GridLayout {
     }
 
     private void left() {
-        copyModelToOldModel();
+        saveBeforeModel();
         for (int i = 0; i < rowCounts; i++) {
             for (int j = 1, skip = 1; j < columnCounts; j++) {
                 if (model[i][j] > 1) {
-                    if (model[i][j - 1] == 1) {
-                        if (skip == 0) {
-                            skip++;
-                        }
-//                        continue;
-                    }
                     if (model[i][j - skip] == 0) {
                         model[i][j - skip] = model[i][j];
                         model[i][j] = 0;
@@ -372,7 +388,7 @@ public class View2048 extends GridLayout {
                         }
                     }
                 } else if (model[i][j] == 1) {
-                    skip = 0;
+                    skip = 1;
                 } else {
                     if (model[i][j - 1] != 1) {
                         skip++;
@@ -387,16 +403,10 @@ public class View2048 extends GridLayout {
     }
 
     private void top() {
-        copyModelToOldModel();
+        saveBeforeModel();
         for (int j = 0; j < columnCounts; j++) {
             for (int i = 1, skip = 1; i < rowCounts; i++) {
                 if (model[i][j] > 1) {
-                    if (model[i - 1][j] == 1) {
-                        if (skip == 0) {
-                            skip++;
-                        }
-//                        continue;
-                    }
                     if (model[i - skip][j] == 0) {
                         model[i - skip][j] = model[i][j];
                         model[i][j] = 0;
@@ -417,7 +427,7 @@ public class View2048 extends GridLayout {
                         }
                     }
                 } else if (model[i][j] == 1) {
-                    skip = 0;
+                    skip = 1;
                 } else {
                     if (model[i - 1][j] != 1) {
                         skip++;
@@ -431,16 +441,10 @@ public class View2048 extends GridLayout {
     }
 
     private void right() {
-        copyModelToOldModel();
+        saveBeforeModel();
         for (int i = 0; i < rowCounts; i++) {
             for (int j = columnCounts - 2, skip = 1; j >= 0; j--) {
                 if (model[i][j] > 1) {
-                    if (model[i][j + 1] == 1) {
-                        if (skip == 0) {
-                            skip++;
-                        }
-//                        continue;
-                    }
                     if (model[i][j + skip] == 0) {
                         model[i][j + skip] = model[i][j];
                         model[i][j] = 0;
@@ -461,7 +465,7 @@ public class View2048 extends GridLayout {
                         }
                     }
                 } else if (model[i][j] == 1) {
-                    skip = 0;
+                    skip = 1;
                 } else {
                     if (model[i][j + 1] != 1) {
                         skip++;
@@ -475,16 +479,10 @@ public class View2048 extends GridLayout {
     }
 
     private void bottom() {
-        copyModelToOldModel();
+        saveBeforeModel();
         for (int j = 0; j < columnCounts; j++) {
             for (int i = rowCounts - 2, skip = 1; i >= 0; i--) {
                 if (model[i][j] > 1) {
-                    if (model[i + 1][j] == 1) {
-                        if (skip == 0) {
-                            skip++;
-                        }
-//                        continue;
-                    }
                     if (model[i + skip][j] == 0) {
                         model[i + skip][j] = model[i][j];
                         model[i][j] = 0;
@@ -505,7 +503,7 @@ public class View2048 extends GridLayout {
                         }
                     }
                 } else if (model[i][j] == 1) {
-                    skip = 0;
+                    skip = 1;
                 } else {
                     if (model[i + 1][j] != 1) {
                         skip++;
@@ -551,34 +549,35 @@ public class View2048 extends GridLayout {
         //只有当数组发生变化时才会产生新数
         if (isModelChange) {
             //取出值为0的坐标，从中随机取出一个坐标添加一个新值
-            zeroInModels.clear();
+            zeroModelPoints.clear();
             for (int i = 0; i < rowCounts; i++) {
                 for (int j = 0; j < columnCounts; j++) {
                     if (model[i][j] == 0) {
-                        zeroInModels.add(i + "," + j);
+                        zeroModelPoints.add(new Point(i, j));
                     }
                 }
             }
-            String[] newPosition = zeroInModels.get(random.nextInt(zeroInModels.size())).split(",");
+            Point point = zeroModelPoints.get(random.nextInt(zeroModelPoints.size()));
             int newValue = 2;
             //产生4的概率为20%
             if (random.nextInt(10) >= 8) {
                 newValue = 4;
             }
-            int row = Integer.parseInt(newPosition[0]);
-            int col = Integer.parseInt(newPosition[1]);
+            int row = point.x;
+            int col = point.y;
             //有新添加的数字，执行缩放动画
             ObjectAnimator.ofFloat(tvs.get(row * columnCounts + col), "scaleX", 0, 1).setDuration(ANIMATION_TIME).start();
             ObjectAnimator.ofFloat(tvs.get(row * columnCounts + col), "scaleY", 0, 1).setDuration(ANIMATION_TIME).start();
             model[row][col] = newValue;
             isModelChange = false;
             //填充完最后一个空检查是否game over
-            if (zeroInModels.size() == 1) {
+            if (zeroModelPoints.size() == 1) {
                 if (isGameOver()) {
                     Toast.makeText(mContext, "game over", Toast.LENGTH_SHORT).show();
                 }
             }
         }
+        cacheModel();
         show();
     }
 
@@ -599,7 +598,7 @@ public class View2048 extends GridLayout {
                     tvs.get(i * columnCounts + j).setBackgroundResource(R.drawable.ice);
                 }
                 if (model[i][j] > 1) {
-                    tvs.get(i * columnCounts + j).setText(model[i][j] + "");
+                    tvs.get(i * columnCounts + j).setText(String.valueOf(model[i][j]));
                 }
                 tvs.get(i * columnCounts + j).setVisibility(model[i][j] > 0 ? VISIBLE : INVISIBLE);
             }
@@ -610,12 +609,20 @@ public class View2048 extends GridLayout {
      * 全部填充满时检查是否game over，检查水平方向和竖直方向相邻两个数是否相等，1除外
      */
     private boolean isGameOver() {
+        //检查横向
         for (int i = 0; i < rowCounts; i++) {
             for (int j = 1; j < columnCounts; j++) {
                 if (model[i][j] != 1) {
                     if (model[i][j] == model[i][j - 1]) {
                         return false;
                     }
+                }
+            }
+        }
+        //检查竖向
+        for (int i = 0; i < columnCounts; i++) {
+            for (int j = 1; j < rowCounts; j++) {
+                if (model[j][i] != 1) {
                     if (model[j][i] == model[j - 1][i]) {
                         return false;
                     }
@@ -626,28 +633,55 @@ public class View2048 extends GridLayout {
     }
 
     /**
-     * 撤销
+     * 保存移动前的model
      */
-    public void revoke() {
-        copyOldModelToModel();
-        show();
-    }
-
-    /**
-     * 复制模型
-     */
-    private void copyModelToOldModel() {
+    private void saveBeforeModel() {
         for (int i = 0; i < rowCounts; i++) {
-            oldModel[i] = model[i].clone();
+            beforeModel[i] = model[i].clone();
         }
     }
 
     /**
-     * 复制模型
+     * 缓存模型
      */
-    private void copyOldModelToModel() {
+    private void cacheModel() {
+        if (isCache()) {
+            if (cacheModel.size() == CACHE_COUNTS) {
+                cacheModel.remove(0);
+            }
+            int[][] cModel = new int[rowCounts][columnCounts];
+            for (int i = 0; i < rowCounts; i++) {
+                cModel[i] = beforeModel[i].clone();
+            }
+            cacheModel.add(cModel);
+        }
+    }
+
+    /**
+     * 是否缓存模型，只有数据不一样才缓存
+     *
+     * @return
+     */
+    private boolean isCache() {
         for (int i = 0; i < rowCounts; i++) {
-            model[i] = oldModel[i].clone();
+            if (!Arrays.equals(beforeModel[i], model[i])) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 撤销，从缓存中取出模型，取最后一个并显示
+     */
+    public void revoke() {
+        if (cacheModel.size() > 0) {
+            int[][] lastModel = cacheModel.get(cacheModel.size() - 1);
+            for (int i = 0; i < rowCounts; i++) {
+                model[i] = lastModel[i].clone();
+            }
+            cacheModel.remove(cacheModel.size() - 1);
+            show();
         }
     }
 
