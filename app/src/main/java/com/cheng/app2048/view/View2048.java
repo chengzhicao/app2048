@@ -4,6 +4,8 @@ import android.animation.Animator;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.content.Context;
+import android.content.SharedPreferences;
+import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -39,6 +41,11 @@ public class View2048 extends GridLayout {
     private final int CACHE_COUNTS = 3;//缓存数量
     private SparseArray<String> colors = new SparseArray<>(COLOR_COUNTS);
     private SparseIntArray backgrounds = new SparseIntArray(COLOR_COUNTS);
+    private final static String CONTINUE_GAME = "continueGame";
+    private final String MODELS = "models";
+    private final String SCORE = "score";
+    private SharedPreferences sp;
+    private SharedPreferences.Editor edit;
 
     /**
      * textView的背景集合
@@ -48,38 +55,43 @@ public class View2048 extends GridLayout {
     /**
      * 行数
      */
-    private int rowCounts = 4;
+    private int rowCounts;
 
     /**
      * 列数
      */
-    private int columnCounts = 4;
+    private int columnCounts;
 
     /**
      * 不能移动的数量
      */
-    private int fixedNum = 1;
+    private int fixedCounts;
 
     /**
      * 数据模型，映射各textView，所有的数值变化都是发生在模型中
      */
-    private int[][] model = new int[rowCounts][columnCounts];
-//    private int[][] model = new int[][]{{0, 2, 0, 0}, {0, 0, 2, 1}, {0, 1, 1, 0}, {0, 0, 0, 0}};
+    private int[][] models;
+//    private int[][] models = new int[][]{{0, 2, 0, 0}, {0, 0, 2, 1}, {0, 1, 1, 0}, {0, 0, 0, 0}};
 
     /**
      * 上一次的mode值，用于返回上次
      */
-    private List<int[][]> cacheModel = new ArrayList<>();
+    private List<int[][]> cacheModel = new ArrayList<>(CACHE_COUNTS);
+
+    /**
+     * 缓存分数
+     */
+    private List<Integer> cacheScore = new ArrayList<>(CACHE_COUNTS);
 
     /**
      * 移动之前时的model
      */
-    private int[][] beforeModel = new int[rowCounts][columnCounts];
+    private int[][] beforeModel;
 
     /**
      * textView集合，用于移动时交换位置
      */
-    private SparseArray<TextView> tvs = new SparseArray<>(rowCounts * columnCounts);
+    private SparseArray<TextView> tvs;
 
     /**
      * textView之间间隔
@@ -104,7 +116,7 @@ public class View2048 extends GridLayout {
     /**
      * 记录textView的坐标点，在onLayout时确定，之后不再改变
      */
-    private PointF[] pointFS = new PointF[rowCounts * columnCounts];
+    private PointF[] pointFS;
 
     /**
      * 是否已经布局
@@ -114,7 +126,7 @@ public class View2048 extends GridLayout {
     /**
      * 动画集合，手指抬起时遍历模型，遍历完之后再去执行动画
      */
-    private ArrayList<Animator> animators = new ArrayList<>(rowCounts * columnCounts);
+    private ArrayList<Animator> animators;
 
     /**
      * 延X轴方向平移
@@ -134,12 +146,37 @@ public class View2048 extends GridLayout {
     /**
      * 模型中的坐标集合
      */
-    private List<Point> modelPoints = new ArrayList<>(rowCounts * columnCounts);
+    private List<Point> modelPoints;
 
     /**
      * 值为0的模型坐标集合
      */
-    private List<Point> zeroModelPoints = new ArrayList<>(rowCounts * columnCounts);
+    private List<Point> zeroModelPoints;
+
+    /**
+     * 每段分数
+     */
+    private int everyScore;
+
+    /**
+     * 总分数
+     */
+    private int totalScore;
+
+    /**
+     * 上一步的分数
+     */
+    private int beforeScore;
+
+    /**
+     * 是否合并
+     */
+    private boolean isMerge;
+
+    /**
+     * sp的name
+     */
+    private String spName;
 
     public View2048(Context context) {
         this(context, null);
@@ -151,7 +188,22 @@ public class View2048 extends GridLayout {
 
     public View2048(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
+        TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.View2048);
+        rowCounts = typedArray.getInteger(R.styleable.View2048_rowCounts, 4);
+        if (rowCounts < 4) {
+            rowCounts = 4;
+        }
+        columnCounts = typedArray.getInteger(R.styleable.View2048_columnCounts, 4);
+        if (columnCounts < 4) {
+            columnCounts = 4;
+        }
+        fixedCounts = typedArray.getInteger(R.styleable.View2048_fixedCounts, 0);
+        if (fixedCounts < 0) {
+            fixedCounts = 0;
+        }
+        typedArray.recycle();
         this.mContext = context;
+        spName = context.getClass().getSimpleName();
         setWillNotDraw(false);
         setColor();
         setBackgrounds();
@@ -160,34 +212,33 @@ public class View2048 extends GridLayout {
     }
 
     private void init() {
-        for (int i = 0; i < rowCounts; i++) {
-            for (int j = 0; j < columnCounts; j++) {
-                modelPoints.add(new Point(i, j));
-            }
-        }
+        sp = mContext.getSharedPreferences(spName, Context.MODE_PRIVATE);
+        edit = sp.edit();
+        edit.putBoolean(CONTINUE_GAME, false);
+        edit.apply();
+        initData();
         produceInitNum();
-        //设置行列
         setRowCount(rowCounts);
         setColumnCount(columnCounts);
         for (int i = 0; i < rowCounts; i++) {
             for (int j = 0; j < columnCounts; j++) {
                 TextView textView = new TextView(mContext);
-                if (model[i][j] > 1) {
-                    textView.setText(String.valueOf(model[i][j]));
+                if (models[i][j] > 1) {
+                    textView.setText(String.valueOf(models[i][j]));
                 }
-//                if (drawables.get(model[i][j]) == null) {
-//                    drawables.put(model[i][j], new ColorDrawable(Color.parseColor(colors.get(model[i][j]))));
+//                if (drawables.get(models[i][j]) == null) {
+//                    drawables.put(models[i][j], new ColorDrawable(Color.parseColor(colors.get(models[i][j]))));
 //                }
-//                textView.setBackgroundDrawable(drawables.get(model[i][j] > 2048 || model[i][j] == 0 ? 0 : model[i][j]));
-                if (model[i][j] != 1) {
-                    textView.setBackgroundResource(backgrounds.get(model[i][j] > 2048 || model[i][j] == 0 ? 0 : model[i][j]));
+//                textView.setBackgroundDrawable(drawables.get(models[i][j] > 2048 || models[i][j] == 0 ? 0 : models[i][j]));
+                if (models[i][j] != 1) {
+                    textView.setBackgroundResource(backgrounds.get(models[i][j] > 2048 || models[i][j] == 0 ? 0 : models[i][j]));
                 } else {
                     textView.setBackgroundResource(R.drawable.ice);
                 }
-                textView.setVisibility(model[i][j] > 0 ? VISIBLE : INVISIBLE);
+                textView.setVisibility(models[i][j] > 0 ? VISIBLE : INVISIBLE);
                 textView.setTextSize(20);
                 textView.setTypeface(Typeface.DEFAULT_BOLD);
-                textView.setTextColor(Color.parseColor(model[i][j] > 4 ? TEXT_COLOR_WRITE : TEXT_COLOR_BLACK));
+                textView.setTextColor(Color.parseColor(models[i][j] > 4 ? TEXT_COLOR_WRITE : TEXT_COLOR_BLACK));
                 textView.setGravity(Gravity.CENTER);
                 tvs.put(i * columnCounts + j, textView);
                 addView(textView);
@@ -196,18 +247,38 @@ public class View2048 extends GridLayout {
     }
 
     /**
+     * 初始化数据
+     */
+    private void initData() {
+        models = new int[rowCounts][columnCounts];
+        beforeModel = new int[rowCounts][columnCounts];
+        tvs = new SparseArray<>(rowCounts * columnCounts);
+        pointFS = new PointF[rowCounts * columnCounts];
+        animators = new ArrayList<>(rowCounts * columnCounts);
+        modelPoints = new ArrayList<>(rowCounts * columnCounts);
+        zeroModelPoints = new ArrayList<>(rowCounts * columnCounts);
+    }
+
+    /**
      * 生产初始值
      */
     private void produceInitNum() {
-        for (int i = 0; i < fixedNum + 2; i++) {
+        modelPoints.clear();
+        for (int i = 0; i < rowCounts; i++) {
+            for (int j = 0; j < columnCounts; j++) {
+                models[i][j] = 0;
+                modelPoints.add(new Point(i, j));
+            }
+        }
+        for (int i = 0; i < fixedCounts + 2; i++) {
             int index = random.nextInt(modelPoints.size());
             Point point = modelPoints.get(index);
             int row = point.x;
             int col = point.y;
             if (i < 2) {//产生初始数字
-                model[row][col] = 2;
+                models[row][col] = 2;
             } else {//产生固定数
-                model[row][col] = 1;
+                models[row][col] = 1;
             }
             modelPoints.remove(index);
         }
@@ -319,6 +390,8 @@ public class View2048 extends GridLayout {
             case MotionEvent.ACTION_UP:
                 float currentX = event.getX();
                 float currentY = event.getY();
+                everyScore = 0;
+                isMerge = false;
                 animators.clear();
                 if (Math.sqrt(Math.pow((currentX - downX), 2) + Math.pow((currentY - downY), 2)) > 20) {
                     if (currentX - downX > 0) {//右
@@ -367,30 +440,30 @@ public class View2048 extends GridLayout {
         saveBeforeModel();
         for (int i = 0; i < rowCounts; i++) {
             for (int j = 1, skip = 1; j < columnCounts; j++) {
-                if (model[i][j] > 1) {
-                    if (model[i][j - skip] == 0) {
-                        model[i][j - skip] = model[i][j];
-                        model[i][j] = 0;
+                if (models[i][j] > 1) {
+                    if (models[i][j - skip] == 0) {
+                        models[i][j - skip] = models[i][j];
+                        models[i][j] = 0;
                         preTranslateAnimation(i * columnCounts + j, i * columnCounts + j - skip, false, X);
                         skip++;
-                    } else if (model[i][j - skip] != 1) {
-                        if (model[i][j] == model[i][j - skip]) {
-                            model[i][j - skip] += model[i][j];
-                            model[i][j] = 0;
+                    } else if (models[i][j - skip] != 1) {
+                        if (models[i][j] == models[i][j - skip]) {
+                            models[i][j - skip] += models[i][j];
+                            models[i][j] = 0;
                             preTranslateAnimation(i * columnCounts + j, i * columnCounts + j - skip, true, X);
                         } else {
                             if (skip > 1) {
-                                model[i][j - skip + 1] = model[i][j];
-                                model[i][j] = 0;
+                                models[i][j - skip + 1] = models[i][j];
+                                models[i][j] = 0;
                                 preTranslateAnimation(i * columnCounts + j, i * columnCounts + j - skip + 1, false, X);
 //                                skip = 1;
                             }
                         }
                     }
-                } else if (model[i][j] == 1) {
+                } else if (models[i][j] == 1) {
                     skip = 1;
                 } else {
-                    if (model[i][j - 1] != 1) {
+                    if (models[i][j - 1] != 1) {
                         skip++;
                     }
                 }
@@ -406,30 +479,30 @@ public class View2048 extends GridLayout {
         saveBeforeModel();
         for (int j = 0; j < columnCounts; j++) {
             for (int i = 1, skip = 1; i < rowCounts; i++) {
-                if (model[i][j] > 1) {
-                    if (model[i - skip][j] == 0) {
-                        model[i - skip][j] = model[i][j];
-                        model[i][j] = 0;
+                if (models[i][j] > 1) {
+                    if (models[i - skip][j] == 0) {
+                        models[i - skip][j] = models[i][j];
+                        models[i][j] = 0;
                         preTranslateAnimation(i * columnCounts + j, (i - skip) * columnCounts + j, false, Y);
                         skip++;
-                    } else if (model[i - skip][j] != 1) {
-                        if (model[i][j] == model[i - skip][j]) {
-                            model[i - skip][j] += model[i][j];
-                            model[i][j] = 0;
+                    } else if (models[i - skip][j] != 1) {
+                        if (models[i][j] == models[i - skip][j]) {
+                            models[i - skip][j] += models[i][j];
+                            models[i][j] = 0;
                             preTranslateAnimation(i * columnCounts + j, (i - skip) * columnCounts + j, true, Y);
                         } else {
                             if (skip > 1) {
-                                model[i - skip + 1][j] = model[i][j];
-                                model[i][j] = 0;
+                                models[i - skip + 1][j] = models[i][j];
+                                models[i][j] = 0;
                                 preTranslateAnimation(i * columnCounts + j, (i - skip + 1) * columnCounts + j, false, Y);
 //                                skip = 1;
                             }
                         }
                     }
-                } else if (model[i][j] == 1) {
+                } else if (models[i][j] == 1) {
                     skip = 1;
                 } else {
-                    if (model[i - 1][j] != 1) {
+                    if (models[i - 1][j] != 1) {
                         skip++;
                     }
                 }
@@ -444,30 +517,30 @@ public class View2048 extends GridLayout {
         saveBeforeModel();
         for (int i = 0; i < rowCounts; i++) {
             for (int j = columnCounts - 2, skip = 1; j >= 0; j--) {
-                if (model[i][j] > 1) {
-                    if (model[i][j + skip] == 0) {
-                        model[i][j + skip] = model[i][j];
-                        model[i][j] = 0;
+                if (models[i][j] > 1) {
+                    if (models[i][j + skip] == 0) {
+                        models[i][j + skip] = models[i][j];
+                        models[i][j] = 0;
                         preTranslateAnimation(i * columnCounts + j, i * columnCounts + j + skip, false, X);
                         skip++;
-                    } else if (model[i][j + skip] != 1) {
-                        if (model[i][j] == model[i][j + skip]) {
-                            model[i][j + skip] += model[i][j];
-                            model[i][j] = 0;
+                    } else if (models[i][j + skip] != 1) {
+                        if (models[i][j] == models[i][j + skip]) {
+                            models[i][j + skip] += models[i][j];
+                            models[i][j] = 0;
                             preTranslateAnimation(i * columnCounts + j, i * columnCounts + j + skip, true, X);
                         } else {
                             if (skip > 1) {
-                                model[i][j + skip - 1] = model[i][j];
-                                model[i][j] = 0;
+                                models[i][j + skip - 1] = models[i][j];
+                                models[i][j] = 0;
                                 preTranslateAnimation(i * columnCounts + j, i * columnCounts + j + skip - 1, false, X);
 //                                skip = 1;
                             }
                         }
                     }
-                } else if (model[i][j] == 1) {
+                } else if (models[i][j] == 1) {
                     skip = 1;
                 } else {
-                    if (model[i][j + 1] != 1) {
+                    if (models[i][j + 1] != 1) {
                         skip++;
                     }
                 }
@@ -482,30 +555,30 @@ public class View2048 extends GridLayout {
         saveBeforeModel();
         for (int j = 0; j < columnCounts; j++) {
             for (int i = rowCounts - 2, skip = 1; i >= 0; i--) {
-                if (model[i][j] > 1) {
-                    if (model[i + skip][j] == 0) {
-                        model[i + skip][j] = model[i][j];
-                        model[i][j] = 0;
+                if (models[i][j] > 1) {
+                    if (models[i + skip][j] == 0) {
+                        models[i + skip][j] = models[i][j];
+                        models[i][j] = 0;
                         preTranslateAnimation(i * columnCounts + j, (i + skip) * columnCounts + j, false, Y);
                         skip++;
-                    } else if (model[i + skip][j] != 1) {
-                        if (model[i][j] == model[i + skip][j]) {
-                            model[i + skip][j] += model[i][j];
-                            model[i][j] = 0;
+                    } else if (models[i + skip][j] != 1) {
+                        if (models[i][j] == models[i + skip][j]) {
+                            models[i + skip][j] += models[i][j];
+                            models[i][j] = 0;
                             preTranslateAnimation(i * columnCounts + j, (i + skip) * columnCounts + j, true, Y);
                         } else {
                             if (skip > 1) {
-                                model[i + skip - 1][j] = model[i][j];
-                                model[i][j] = 0;
+                                models[i + skip - 1][j] = models[i][j];
+                                models[i][j] = 0;
                                 preTranslateAnimation(i * columnCounts + j, (i + skip - 1) * columnCounts + j, false, Y);
 //                                skip = 1;
                             }
                         }
                     }
-                } else if (model[i][j] == 1) {
+                } else if (models[i][j] == 1) {
                     skip = 1;
                 } else {
-                    if (model[i + 1][j] != 1) {
+                    if (models[i + 1][j] != 1) {
                         skip++;
                     }
                 }
@@ -519,7 +592,7 @@ public class View2048 extends GridLayout {
     /**
      * 位移动画预处理
      */
-    private void preTranslateAnimation(final int from, final int to, final boolean isAdd, int direction) {
+    private void preTranslateAnimation(int from, final int to, boolean isAdd, int direction) {
         ObjectAnimator objectAnimator;
         if (direction == X) {
             objectAnimator = ObjectAnimator.ofFloat(tvs.get(from), "X", pointFS[to].x);
@@ -528,6 +601,9 @@ public class View2048 extends GridLayout {
         }
         objectAnimator.addListener(new AnimatorListener(from, to, isAdd));
         animators.add(objectAnimator);
+        if (isAdd) {
+            isMerge = true;
+        }
     }
 
     /**
@@ -540,6 +616,13 @@ public class View2048 extends GridLayout {
         animatorSet.setDuration(ANIMATION_TIME);
         animatorSet.addListener(new AnimatorListener());
         animatorSet.start();
+        if (eventListener != null) {
+            if (isMerge) {//播放合并的声音
+                eventListener.mergeListener();
+            } else {//播放移动的声音
+                eventListener.moveListener();
+            }
+        }
     }
 
     /**
@@ -552,7 +635,7 @@ public class View2048 extends GridLayout {
             zeroModelPoints.clear();
             for (int i = 0; i < rowCounts; i++) {
                 for (int j = 0; j < columnCounts; j++) {
-                    if (model[i][j] == 0) {
+                    if (models[i][j] == 0) {
                         zeroModelPoints.add(new Point(i, j));
                     }
                 }
@@ -568,7 +651,7 @@ public class View2048 extends GridLayout {
             //有新添加的数字，执行缩放动画
             ObjectAnimator.ofFloat(tvs.get(row * columnCounts + col), "scaleX", 0, 1).setDuration(ANIMATION_TIME).start();
             ObjectAnimator.ofFloat(tvs.get(row * columnCounts + col), "scaleY", 0, 1).setDuration(ANIMATION_TIME).start();
-            model[row][col] = newValue;
+            models[row][col] = newValue;
             isModelChange = false;
             //填充完最后一个空检查是否game over
             if (zeroModelPoints.size() == 1) {
@@ -577,8 +660,27 @@ public class View2048 extends GridLayout {
                 }
             }
         }
+        saveModel();
         cacheModel();
         show();
+    }
+
+    /**
+     * 保存模型
+     */
+    private void saveModel() {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < rowCounts; i++) {
+            for (int j = 0; j < columnCounts; j++) {
+                sb.append(models[i][j]);
+                if (i != rowCounts - 1 || j != columnCounts - 1) {
+                    sb.append(",");
+                }
+            }
+        }
+        edit.putString(MODELS, sb.toString());
+        edit.putBoolean(CONTINUE_GAME, true);
+        edit.apply();
     }
 
     /**
@@ -587,20 +689,20 @@ public class View2048 extends GridLayout {
     private void show() {
         for (int i = 0; i < rowCounts; i++) {
             for (int j = 0; j < columnCounts; j++) {
-                tvs.get(i * columnCounts + j).setTextColor(Color.parseColor(model[i][j] > 4 ? TEXT_COLOR_WRITE : TEXT_COLOR_BLACK));
-//                if (drawables.get(model[i][j]) == null) {
-//                    drawables.put(model[i][j], new ColorDrawable(Color.parseColor(colors.get(model[i][j]))));
+                tvs.get(i * columnCounts + j).setTextColor(Color.parseColor(models[i][j] > 4 ? TEXT_COLOR_WRITE : TEXT_COLOR_BLACK));
+//                if (drawables.get(models[i][j]) == null) {
+//                    drawables.put(models[i][j], new ColorDrawable(Color.parseColor(colors.get(models[i][j]))));
 //                }
-//                tvs.get(i * columnCounts + j).setBackgroundDrawable(drawables.get(model[i][j] > 2048 || model[i][j] == 0 ? 0 : model[i][j]));
-                if (model[i][j] != 1) {
-                    tvs.get(i * columnCounts + j).setBackgroundResource(backgrounds.get(model[i][j] > 2048 || model[i][j] == 0 ? 0 : model[i][j]));
+//                tvs.get(i * columnCounts + j).setBackgroundDrawable(drawables.get(models[i][j] > 2048 || models[i][j] == 0 ? 0 : models[i][j]));
+                if (models[i][j] != 1) {
+                    tvs.get(i * columnCounts + j).setBackgroundResource(backgrounds.get(models[i][j] > 2048 || models[i][j] == 0 ? 0 : models[i][j]));
                 } else {
                     tvs.get(i * columnCounts + j).setBackgroundResource(R.drawable.ice);
                 }
-                if (model[i][j] > 1) {
-                    tvs.get(i * columnCounts + j).setText(String.valueOf(model[i][j]));
+                if (models[i][j] > 1) {
+                    tvs.get(i * columnCounts + j).setText(String.valueOf(models[i][j]));
                 }
-                tvs.get(i * columnCounts + j).setVisibility(model[i][j] > 0 ? VISIBLE : INVISIBLE);
+                tvs.get(i * columnCounts + j).setVisibility(models[i][j] > 0 ? VISIBLE : INVISIBLE);
             }
         }
     }
@@ -612,8 +714,8 @@ public class View2048 extends GridLayout {
         //检查横向
         for (int i = 0; i < rowCounts; i++) {
             for (int j = 1; j < columnCounts; j++) {
-                if (model[i][j] != 1) {
-                    if (model[i][j] == model[i][j - 1]) {
+                if (models[i][j] != 1) {
+                    if (models[i][j] == models[i][j - 1]) {
                         return false;
                     }
                 }
@@ -622,8 +724,8 @@ public class View2048 extends GridLayout {
         //检查竖向
         for (int i = 0; i < columnCounts; i++) {
             for (int j = 1; j < rowCounts; j++) {
-                if (model[j][i] != 1) {
-                    if (model[j][i] == model[j - 1][i]) {
+                if (models[j][i] != 1) {
+                    if (models[j][i] == models[j - 1][i]) {
                         return false;
                     }
                 }
@@ -637,8 +739,9 @@ public class View2048 extends GridLayout {
      */
     private void saveBeforeModel() {
         for (int i = 0; i < rowCounts; i++) {
-            beforeModel[i] = model[i].clone();
+            beforeModel[i] = models[i].clone();
         }
+        beforeScore = totalScore;
     }
 
     /**
@@ -648,12 +751,14 @@ public class View2048 extends GridLayout {
         if (isCache()) {
             if (cacheModel.size() == CACHE_COUNTS) {
                 cacheModel.remove(0);
+                cacheScore.remove(0);
             }
             int[][] cModel = new int[rowCounts][columnCounts];
             for (int i = 0; i < rowCounts; i++) {
                 cModel[i] = beforeModel[i].clone();
             }
             cacheModel.add(cModel);
+            cacheScore.add(beforeScore);
         }
     }
 
@@ -664,7 +769,7 @@ public class View2048 extends GridLayout {
      */
     private boolean isCache() {
         for (int i = 0; i < rowCounts; i++) {
-            if (!Arrays.equals(beforeModel[i], model[i])) {
+            if (!Arrays.equals(beforeModel[i], models[i])) {
                 return true;
             }
         }
@@ -676,13 +781,78 @@ public class View2048 extends GridLayout {
      */
     public void revoke() {
         if (cacheModel.size() > 0) {
+            totalScore = cacheScore.get(cacheScore.size() - 1);
+            if (eventListener != null) {
+                eventListener.revokeScoreListener(totalScore);
+            }
             int[][] lastModel = cacheModel.get(cacheModel.size() - 1);
             for (int i = 0; i < rowCounts; i++) {
-                model[i] = lastModel[i].clone();
+                models[i] = lastModel[i].clone();
             }
             cacheModel.remove(cacheModel.size() - 1);
+            cacheScore.remove(cacheScore.size() - 1);
             show();
         }
+    }
+
+    /**
+     * 重新游戏
+     */
+    public void newGame() {
+        edit.putBoolean(CONTINUE_GAME, false);
+        edit.apply();
+        produceInitNum();
+        show();
+        cacheModel.clear();
+    }
+
+    /**
+     * 继续游戏
+     */
+    public void continueGame() {
+        totalScore = sp.getInt(SCORE, 0);
+        edit.putBoolean(CONTINUE_GAME, true);
+        edit.apply();
+        String models = sp.getString(MODELS, null);
+        if (models != null) {
+            String[] split = models.split(",");
+            for (int i = 0; i < rowCounts; i++) {
+                for (int j = 0; j < columnCounts; j++) {
+                    this.models[i][j] = Integer.parseInt(split[i * rowCounts + j]);
+                }
+            }
+        }
+        show();
+    }
+
+    /**
+     * 获取分数
+     *
+     * @return
+     */
+    public int getScore() {
+        return sp.getInt(SCORE, 0);
+    }
+
+    /**
+     * 是否继续游戏
+     *
+     * @return
+     */
+    public static boolean isContinueGame(Context context, Class mClass) {
+        SharedPreferences sp = context.getSharedPreferences(mClass.getSimpleName(), Context.MODE_PRIVATE);
+        return sp.getBoolean(CONTINUE_GAME, false);
+    }
+
+    private EventListener eventListener;
+
+    /**
+     * 注册监听事件
+     *
+     * @param eventListener
+     */
+    public void addEventListener(EventListener eventListener) {
+        this.eventListener = eventListener;
     }
 
     private class AnimatorListener implements Animator.AnimatorListener {
@@ -709,17 +879,24 @@ public class View2048 extends GridLayout {
         public void onAnimationEnd(Animator animation) {
             if (animation instanceof ObjectAnimator) {
                 //交换TextView位置
-                TextView ToTextView = tvs.get(to);
+                TextView toTextView = tvs.get(to);
                 TextView fromTextView = tvs.get(from);
-                ToTextView.setX(pointFS[from].x);
-                ToTextView.setY(pointFS[from].y);
-                tvs.put(from, ToTextView);
+                toTextView.setX(pointFS[from].x);
+                toTextView.setY(pointFS[from].y);
+                tvs.put(from, toTextView);
                 tvs.put(to, fromTextView);
                 if (isAdd) {//如果该数相加，执行缩放动画
+                    everyScore += Integer.parseInt(fromTextView.getText().toString()) * 2;
                     ObjectAnimator.ofFloat(fromTextView, "scaleX", 1.2f, 1).setDuration(ANIMATION_TIME).start();
                     ObjectAnimator.ofFloat(fromTextView, "scaleY", 1.2f, 1).setDuration(ANIMATION_TIME).start();
                 }
             } else if (animation instanceof AnimatorSet) {
+                if (eventListener != null && everyScore != 0) {
+                    eventListener.scoreListener(everyScore);
+                    totalScore += everyScore;
+                    edit.putInt(SCORE, totalScore);
+                    edit.apply();
+                }
                 changeView();
             }
         }
