@@ -12,14 +12,12 @@ import android.graphics.Paint;
 import android.graphics.Point;
 import android.graphics.PointF;
 import android.graphics.RectF;
-import android.graphics.Typeface;
+import android.media.AudioManager;
+import android.media.SoundPool;
 import android.util.AttributeSet;
 import android.util.SparseArray;
-import android.util.SparseIntArray;
-import android.view.Gravity;
 import android.view.MotionEvent;
 import android.widget.GridLayout;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.cheng.app2048.R;
@@ -35,22 +33,19 @@ public class View2048 extends GridLayout {
     private Paint paint = new Paint();
     private RectF rectF = new RectF();
     private Random random = new Random();
-    private final String TEXT_COLOR_WRITE = "#f9f6f2";
-    private final String TEXT_COLOR_BLACK = "#776E65";
-    private final int COLOR_COUNTS = 12;
     private final int CACHE_COUNTS = 3;//缓存数量
-    private SparseArray<String> colors = new SparseArray<>(COLOR_COUNTS);
-    private SparseIntArray backgrounds = new SparseIntArray(COLOR_COUNTS);
     private final static String CONTINUE_GAME = "continueGame";
     private final String MODELS = "models";
     private final String SCORE = "score";
     private SharedPreferences sp;
     private SharedPreferences.Editor edit;
+    private SoundPool soundPool;
+    private int mergerSoundId, moveSoundId;
 
     /**
-     * textView的背景集合
+     * 是否播放声音
      */
-    private SparseArray<ColorDrawable> drawables = new SparseArray<>(COLOR_COUNTS);
+    private boolean isPlaySound;
 
     /**
      * 行数
@@ -71,7 +66,9 @@ public class View2048 extends GridLayout {
      * 数据模型，映射各textView，所有的数值变化都是发生在模型中
      */
     private int[][] models;
-//    private int[][] models = new int[][]{{0, 2, 0, 0}, {0, 0, 2, 1}, {0, 1, 1, 0}, {0, 0, 0, 0}};
+//    private int[][] models = new int[][]{{0, 2, 16, 32, 0, 1024}, {0, 64, 2, 1, 16384, 1024}, {0, 1, 1, 128, 0, 1024}, {0, 512, 0, 512, 0, 1024},
+//            {0, 512, 512, 512, 2048, 1024},
+//            {0, 2048, 2048, 2048, 2048, 1024}, {0, 2, 0, 0, 0, 1024}, {0, 2, 0, 0, 0, 1024}};
 
     /**
      * 上一次的mode值，用于返回上次
@@ -91,7 +88,7 @@ public class View2048 extends GridLayout {
     /**
      * textView集合，用于移动时交换位置
      */
-    private SparseArray<TextView> tvs;
+    private SparseArray<BlockView> tvs;
 
     /**
      * textView之间间隔
@@ -205,13 +202,14 @@ public class View2048 extends GridLayout {
         this.mContext = context;
         spName = context.getClass().getSimpleName();
         setWillNotDraw(false);
-        setColor();
-        setBackgrounds();
         setPadding(space, space, space, space);
         init();
     }
 
     private void init() {
+        soundPool = new SoundPool(1, AudioManager.STREAM_MUSIC, 0);
+        mergerSoundId = soundPool.load(mContext, R.raw.merge, 1);
+        moveSoundId = soundPool.load(mContext, R.raw.move, 1);
         sp = mContext.getSharedPreferences(spName, Context.MODE_PRIVATE);
         edit = sp.edit();
         edit.putBoolean(CONTINUE_GAME, false);
@@ -222,24 +220,9 @@ public class View2048 extends GridLayout {
         setColumnCount(columnCounts);
         for (int i = 0; i < rowCounts; i++) {
             for (int j = 0; j < columnCounts; j++) {
-                TextView textView = new TextView(mContext);
-                if (models[i][j] > 1) {
-                    textView.setText(String.valueOf(models[i][j]));
-                }
-//                if (drawables.get(models[i][j]) == null) {
-//                    drawables.put(models[i][j], new ColorDrawable(Color.parseColor(colors.get(models[i][j]))));
-//                }
-//                textView.setBackgroundDrawable(drawables.get(models[i][j] > 2048 || models[i][j] == 0 ? 0 : models[i][j]));
-                if (models[i][j] != 1) {
-                    textView.setBackgroundResource(backgrounds.get(models[i][j] > 2048 || models[i][j] == 0 ? 0 : models[i][j]));
-                } else {
-                    textView.setBackgroundResource(R.drawable.ice);
-                }
-                textView.setVisibility(models[i][j] > 0 ? VISIBLE : INVISIBLE);
-                textView.setTextSize(20);
-                textView.setTypeface(Typeface.DEFAULT_BOLD);
-                textView.setTextColor(Color.parseColor(models[i][j] > 4 ? TEXT_COLOR_WRITE : TEXT_COLOR_BLACK));
-                textView.setGravity(Gravity.CENTER);
+                int num = models[i][j];
+                BlockView textView = new BlockView(mContext);
+                textView.setText(num);
                 tvs.put(i * columnCounts + j, textView);
                 addView(textView);
             }
@@ -282,39 +265,6 @@ public class View2048 extends GridLayout {
             }
             modelPoints.remove(index);
         }
-    }
-
-    /**
-     * 设置颜色
-     */
-    private void setColor() {
-        colors.put(2, "#eee4da");
-        colors.put(4, "#ede0c8");
-        colors.put(8, "#f2b179");
-        colors.put(16, "#f59563");
-        colors.put(32, "#f67c5f");
-        colors.put(64, "#f65e3b");
-        colors.put(128, "#edcf72");
-        colors.put(256, "#edcc61");
-        colors.put(512, "#edc850");
-        colors.put(1024, "#edc53f");
-        colors.put(2048, "#edc22e");
-        colors.put(0, "#3c3a32");
-    }
-
-    private void setBackgrounds() {
-        backgrounds.put(2, R.drawable.background_2);
-        backgrounds.put(4, R.drawable.background_4);
-        backgrounds.put(8, R.drawable.background_8);
-        backgrounds.put(16, R.drawable.background_16);
-        backgrounds.put(32, R.drawable.background_32);
-        backgrounds.put(64, R.drawable.background_64);
-        backgrounds.put(128, R.drawable.background_128);
-        backgrounds.put(256, R.drawable.background_256);
-        backgrounds.put(512, R.drawable.background_512);
-        backgrounds.put(1024, R.drawable.background_1024);
-        backgrounds.put(2048, R.drawable.background_2048);
-        backgrounds.put(0, R.drawable.background_0);
     }
 
     @Override
@@ -616,11 +566,11 @@ public class View2048 extends GridLayout {
         animatorSet.setDuration(ANIMATION_TIME);
         animatorSet.addListener(new AnimatorListener());
         animatorSet.start();
-        if (eventListener != null) {
+        if (isPlaySound) {
             if (isMerge) {//播放合并的声音
-                eventListener.mergeListener();
+                soundPool.play(mergerSoundId, 1, 1, 0, 0, 1);
             } else {//播放移动的声音
-                eventListener.moveListener();
+                soundPool.play(moveSoundId, 1, 1, 0, 0, 1);
             }
         }
     }
@@ -655,8 +605,8 @@ public class View2048 extends GridLayout {
             isModelChange = false;
             //填充完最后一个空检查是否game over
             if (zeroModelPoints.size() == 1) {
-                if (isGameOver()) {
-                    Toast.makeText(mContext, "game over", Toast.LENGTH_SHORT).show();
+                if (isGameOver() && eventListener != null) {
+                    eventListener.gameOver();
                 }
             }
         }
@@ -689,20 +639,9 @@ public class View2048 extends GridLayout {
     private void show() {
         for (int i = 0; i < rowCounts; i++) {
             for (int j = 0; j < columnCounts; j++) {
-                tvs.get(i * columnCounts + j).setTextColor(Color.parseColor(models[i][j] > 4 ? TEXT_COLOR_WRITE : TEXT_COLOR_BLACK));
-//                if (drawables.get(models[i][j]) == null) {
-//                    drawables.put(models[i][j], new ColorDrawable(Color.parseColor(colors.get(models[i][j]))));
-//                }
-//                tvs.get(i * columnCounts + j).setBackgroundDrawable(drawables.get(models[i][j] > 2048 || models[i][j] == 0 ? 0 : models[i][j]));
-                if (models[i][j] != 1) {
-                    tvs.get(i * columnCounts + j).setBackgroundResource(backgrounds.get(models[i][j] > 2048 || models[i][j] == 0 ? 0 : models[i][j]));
-                } else {
-                    tvs.get(i * columnCounts + j).setBackgroundResource(R.drawable.ice);
-                }
-                if (models[i][j] > 1) {
-                    tvs.get(i * columnCounts + j).setText(String.valueOf(models[i][j]));
-                }
-                tvs.get(i * columnCounts + j).setVisibility(models[i][j] > 0 ? VISIBLE : INVISIBLE);
+                int num = models[i][j];
+                BlockView textView = tvs.get(i * columnCounts + j);
+                textView.setText(num);
             }
         }
     }
@@ -844,6 +783,14 @@ public class View2048 extends GridLayout {
         return sp.getBoolean(CONTINUE_GAME, false);
     }
 
+    public boolean isPlaySound() {
+        return isPlaySound;
+    }
+
+    public void setPlaySound(boolean playSound) {
+        isPlaySound = playSound;
+    }
+
     private EventListener eventListener;
 
     /**
@@ -879,14 +826,14 @@ public class View2048 extends GridLayout {
         public void onAnimationEnd(Animator animation) {
             if (animation instanceof ObjectAnimator) {
                 //交换TextView位置
-                TextView toTextView = tvs.get(to);
-                TextView fromTextView = tvs.get(from);
+                BlockView toTextView = tvs.get(to);
+                BlockView fromTextView = tvs.get(from);
                 toTextView.setX(pointFS[from].x);
                 toTextView.setY(pointFS[from].y);
                 tvs.put(from, toTextView);
                 tvs.put(to, fromTextView);
                 if (isAdd) {//如果该数相加，执行缩放动画
-                    everyScore += Integer.parseInt(fromTextView.getText().toString()) * 2;
+                    everyScore += fromTextView.getNum() * 2;
                     ObjectAnimator.ofFloat(fromTextView, "scaleX", 1.2f, 1).setDuration(ANIMATION_TIME).start();
                     ObjectAnimator.ofFloat(fromTextView, "scaleY", 1.2f, 1).setDuration(ANIMATION_TIME).start();
                 }
