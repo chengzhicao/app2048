@@ -56,6 +56,7 @@ class BlockView extends View {
         colors.put(512, "#edc850");
         colors.put(1024, "#edc53f");
         colors.put(2048, "#edc22e");
+        colors.put(4096, "#784CB4");
         colors.put(0, "#3c3a32");
     }
 
@@ -74,16 +75,18 @@ class BlockView extends View {
 //        super.onDraw(canvas);
         preNum = num;
         if (num > 1) {
-            paint.setColor(Color.parseColor(colors.get(num > 2048 ? 0 : num)));
+            paint.setColor(Color.parseColor(colors.get(num > 4096 ? 0 : num)));
             canvas.drawRoundRect(rectF, 10, 10, paint);
             if (num < 100) {
-                paint.setTextSize(70);
+                paint.setTextSize(80);
             } else if (num < 1000) {
                 paint.setTextSize(60);
             } else if (num < 10000) {
                 paint.setTextSize(50);
-            } else {
+            } else if (num < 100000) {
                 paint.setTextSize(40);
+            } else {
+                paint.setTextSize(30);
             }
             String value = String.valueOf(num);
             paint.setColor(Color.parseColor(num > 4 ? "#f9f6f2" : "#776E65"));

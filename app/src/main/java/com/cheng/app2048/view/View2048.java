@@ -722,7 +722,7 @@ public class View2048 extends GridLayout {
     /**
      * 撤销，从缓存中取出模型，取最后一个并显示
      */
-    public void revoke() {
+    public boolean revoke() {
         if (cacheModel.size() > 0) {
             int totalScoreTemp = totalScore;
             totalScore = cacheScore.get(cacheScore.size() - 1);
@@ -733,10 +733,6 @@ public class View2048 extends GridLayout {
                 }
                 helper.saveHighestScore(highestScore);
             }
-            if (onEventListener != null) {
-                onEventListener.scoreListener(totalScore);
-                onEventListener.highestListener(highestScore);
-            }
             int[][] lastModel = cacheModel.get(cacheModel.size() - 1);
             for (int i = 0; i < rowCounts; i++) {
                 models[i] = lastModel[i].clone();
@@ -746,7 +742,13 @@ public class View2048 extends GridLayout {
             cacheModel.remove(cacheModel.size() - 1);
             cacheScore.remove(cacheScore.size() - 1);
             show();
+            if (onEventListener != null) {
+                onEventListener.scoreListener(totalScore);
+                onEventListener.highestListener(highestScore);
+            }
+            return true;
         }
+        return false;
     }
 
     /**
