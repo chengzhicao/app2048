@@ -4,7 +4,6 @@ import android.animation.Animator;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -18,7 +17,6 @@ import android.util.AttributeSet;
 import android.util.SparseArray;
 import android.view.MotionEvent;
 import android.widget.GridLayout;
-import android.widget.Toast;
 
 import com.cheng.app2048.R;
 
@@ -34,11 +32,7 @@ public class View2048 extends GridLayout {
     private RectF rectF = new RectF();
     private Random random = new Random();
     private final int CACHE_COUNTS = 3;//缓存数量
-    private final static String CONTINUE_GAME = "continueGame";
-    private final String MODELS = "models";
-    private final String SCORE = "score";
-    private SharedPreferences sp;
-    private SharedPreferences.Editor edit;
+    private SharedPreferencesHelper helper;
     private SoundPool soundPool;
     private int mergerSoundId, moveSoundId;
 
@@ -161,6 +155,13 @@ public class View2048 extends GridLayout {
     private int totalScore;
 
     /**
+     * 最高分
+     */
+    private int highestScore;
+
+    private int highestScoreTemp;
+
+    /**
      * 上一步的分数
      */
     private int beforeScore;
@@ -169,11 +170,6 @@ public class View2048 extends GridLayout {
      * 是否合并
      */
     private boolean isMerge;
-
-    /**
-     * sp的name
-     */
-    private String spName;
 
     public View2048(Context context) {
         this(context, null);
@@ -186,13 +182,13 @@ public class View2048 extends GridLayout {
     public View2048(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.View2048);
-        rowCounts = typedArray.getInteger(R.styleable.View2048_rowCounts, 4);
-        if (rowCounts < 4) {
-            rowCounts = 4;
+        rowCounts = typedArray.getInteger(R.styleable.View2048_rowCounts, 0);
+        if (rowCounts < 0) {
+            rowCounts = 0;
         }
-        columnCounts = typedArray.getInteger(R.styleable.View2048_columnCounts, 4);
-        if (columnCounts < 4) {
-            columnCounts = 4;
+        columnCounts = typedArray.getInteger(R.styleable.View2048_columnCounts, 0);
+        if (columnCounts < 0) {
+            columnCounts = 0;
         }
         fixedCounts = typedArray.getInteger(R.styleable.View2048_fixedCounts, 0);
         if (fixedCounts < 0) {
@@ -200,24 +196,25 @@ public class View2048 extends GridLayout {
         }
         typedArray.recycle();
         this.mContext = context;
-        spName = context.getClass().getSimpleName();
-        setWillNotDraw(false);
-        setPadding(space, space, space, space);
         init();
     }
 
     private void init() {
+        setWillNotDraw(false);
         soundPool = new SoundPool(1, AudioManager.STREAM_MUSIC, 0);
         mergerSoundId = soundPool.load(mContext, R.raw.merge, 1);
         moveSoundId = soundPool.load(mContext, R.raw.move, 1);
-        sp = mContext.getSharedPreferences(spName, Context.MODE_PRIVATE);
-        edit = sp.edit();
-        edit.putBoolean(CONTINUE_GAME, false);
-        edit.apply();
+        helper = new SharedPreferencesHelper();
+        setPadding(space, space, space, space);
+        initView();
+    }
+
+    /**
+     * 初始化视图
+     */
+    private void initView() {
         initData();
         produceInitNum();
-        setRowCount(rowCounts);
-        setColumnCount(columnCounts);
         for (int i = 0; i < rowCounts; i++) {
             for (int j = 0; j < columnCounts; j++) {
                 int num = models[i][j];
@@ -240,6 +237,8 @@ public class View2048 extends GridLayout {
         animators = new ArrayList<>(rowCounts * columnCounts);
         modelPoints = new ArrayList<>(rowCounts * columnCounts);
         zeroModelPoints = new ArrayList<>(rowCounts * columnCounts);
+        setRowCount(rowCounts);
+        setColumnCount(columnCounts);
     }
 
     /**
@@ -252,6 +251,9 @@ public class View2048 extends GridLayout {
                 models[i][j] = 0;
                 modelPoints.add(new Point(i, j));
             }
+        }
+        if (rowCounts * columnCounts < fixedCounts + 2) {
+            return;
         }
         for (int i = 0; i < fixedCounts + 2; i++) {
             int index = random.nextInt(modelPoints.size());
@@ -270,6 +272,9 @@ public class View2048 extends GridLayout {
     @Override
     protected void onMeasure(int widthSpec, int heightSpec) {
         super.onMeasure(widthSpec, heightSpec);
+        if (rowCounts < 1 || columnCounts < 1) {
+            return;
+        }
         int width = 800, height = 800;
         if (MeasureSpec.getMode(widthSpec) == MeasureSpec.EXACTLY) {
             width = MeasureSpec.getSize(widthSpec);
@@ -605,8 +610,8 @@ public class View2048 extends GridLayout {
             isModelChange = false;
             //填充完最后一个空检查是否game over
             if (zeroModelPoints.size() == 1) {
-                if (isGameOver() && eventListener != null) {
-                    eventListener.gameOver();
+                if (isGameOver() && onEventListener != null) {
+                    onEventListener.gameOver();
                 }
             }
         }
@@ -628,9 +633,8 @@ public class View2048 extends GridLayout {
                 }
             }
         }
-        edit.putString(MODELS, sb.toString());
-        edit.putBoolean(CONTINUE_GAME, true);
-        edit.apply();
+        helper.saveModels(sb.toString());
+        helper.saveContinueGame(true);
     }
 
     /**
@@ -720,14 +724,25 @@ public class View2048 extends GridLayout {
      */
     public void revoke() {
         if (cacheModel.size() > 0) {
+            int totalScoreTemp = totalScore;
             totalScore = cacheScore.get(cacheScore.size() - 1);
-            if (eventListener != null) {
-                eventListener.revokeScoreListener(totalScore);
+            if (highestScore > highestScoreTemp) {
+                highestScore = highestScore - (totalScoreTemp - totalScore);
+                if (highestScore < highestScoreTemp) {
+                    highestScore = highestScoreTemp;
+                }
+                helper.saveHighestScore(highestScore);
+            }
+            if (onEventListener != null) {
+                onEventListener.scoreListener(totalScore);
+                onEventListener.highestListener(highestScore);
             }
             int[][] lastModel = cacheModel.get(cacheModel.size() - 1);
             for (int i = 0; i < rowCounts; i++) {
                 models[i] = lastModel[i].clone();
             }
+            saveModel();
+            helper.saveScore(totalScore);
             cacheModel.remove(cacheModel.size() - 1);
             cacheScore.remove(cacheScore.size() - 1);
             show();
@@ -738,8 +753,9 @@ public class View2048 extends GridLayout {
      * 重新游戏
      */
     public void newGame() {
-        edit.putBoolean(CONTINUE_GAME, false);
-        edit.apply();
+        totalScore = 0;
+        highestScoreTemp = highestScore;
+        helper.saveContinueGame(false);
         produceInitNum();
         show();
         cacheModel.clear();
@@ -749,19 +765,25 @@ public class View2048 extends GridLayout {
      * 继续游戏
      */
     public void continueGame() {
-        totalScore = sp.getInt(SCORE, 0);
-        edit.putBoolean(CONTINUE_GAME, true);
-        edit.apply();
-        String models = sp.getString(MODELS, null);
-        if (models != null) {
-            String[] split = models.split(",");
+        totalScore = helper.getScore();
+        String diskModels = helper.getModels();
+        rowCounts = helper.getRowCounts();
+        columnCounts = helper.getColumnCounts();
+        fixedCounts = helper.getFixedCounts();
+        initData();
+        if (diskModels != null) {
+            String[] split = diskModels.split(",");
             for (int i = 0; i < rowCounts; i++) {
                 for (int j = 0; j < columnCounts; j++) {
-                    this.models[i][j] = Integer.parseInt(split[i * rowCounts + j]);
+                    int num = Integer.parseInt(split[i * columnCounts + j]);
+                    models[i][j] = num;
+                    BlockView textView = new BlockView(mContext);
+                    textView.setText(num);
+                    tvs.put(i * columnCounts + j, textView);
+                    addView(textView);
                 }
             }
         }
-        show();
     }
 
     /**
@@ -770,7 +792,7 @@ public class View2048 extends GridLayout {
      * @return
      */
     public int getScore() {
-        return sp.getInt(SCORE, 0);
+        return helper.getScore();
     }
 
     /**
@@ -778,28 +800,64 @@ public class View2048 extends GridLayout {
      *
      * @return
      */
-    public static boolean isContinueGame(Context context, Class mClass) {
-        SharedPreferences sp = context.getSharedPreferences(mClass.getSimpleName(), Context.MODE_PRIVATE);
-        return sp.getBoolean(CONTINUE_GAME, false);
+    public boolean isContinueGame() {
+        return helper.isContinueGame();
     }
 
+    /**
+     * 是否开启声音
+     *
+     * @return
+     */
     public boolean isPlaySound() {
         return isPlaySound;
     }
 
+    /**
+     * 打开/关闭声音
+     *
+     * @param playSound
+     */
     public void setPlaySound(boolean playSound) {
         isPlaySound = playSound;
     }
 
-    private EventListener eventListener;
+    private OnEventListener onEventListener;
 
     /**
      * 注册监听事件
      *
-     * @param eventListener
+     * @param onEventListener
      */
-    public void addEventListener(EventListener eventListener) {
-        this.eventListener = eventListener;
+    public void addEventListener(OnEventListener onEventListener) {
+        this.onEventListener = onEventListener;
+    }
+
+    /**
+     * 设置结构
+     */
+    public void setStructure(int rowCounts, int columnCounts, int fixedCounts) {
+        this.rowCounts = rowCounts;
+        this.columnCounts = columnCounts;
+        this.fixedCounts = fixedCounts;
+        helper.saveFixedCounts(rowCounts, columnCounts, fixedCounts);
+        initView();
+    }
+
+    /**
+     * 获取最高成绩
+     */
+    public int getHighestScore() {
+        return highestScore;
+    }
+
+    /**
+     * 设置game mode，用于存储游戏状态，每种游戏模式的Id是唯一的
+     */
+    public void setGameMode(String gameMode) {
+        helper.setSpName(mContext, gameMode);
+        highestScore = helper.getHighestScore();
+        highestScoreTemp = highestScore;
     }
 
     private class AnimatorListener implements Animator.AnimatorListener {
@@ -838,11 +896,21 @@ public class View2048 extends GridLayout {
                     ObjectAnimator.ofFloat(fromTextView, "scaleY", 1.2f, 1).setDuration(ANIMATION_TIME).start();
                 }
             } else if (animation instanceof AnimatorSet) {
-                if (eventListener != null && everyScore != 0) {
-                    eventListener.scoreListener(everyScore);
+                if (everyScore != 0) {
                     totalScore += everyScore;
-                    edit.putInt(SCORE, totalScore);
-                    edit.apply();
+                    if (onEventListener != null) {
+                        onEventListener.scoreListener(totalScore);
+                    }
+                    //保存当前分数
+                    helper.saveScore(totalScore);
+                    if (totalScore > highestScore) {
+                        highestScore = totalScore;
+                        if (onEventListener != null) {
+                            onEventListener.highestListener(highestScore);
+                        }
+                        //保存最高分数
+                        helper.saveHighestScore(highestScore);
+                    }
                 }
                 changeView();
             }

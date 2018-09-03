@@ -14,7 +14,7 @@ import android.view.View;
 
 import com.cheng.app2048.R;
 
-public class BlockView extends View {
+class BlockView extends View {
     private int width, height;
     private Paint paint;
     private RectF rectF;
@@ -88,7 +88,6 @@ public class BlockView extends View {
             String value = String.valueOf(num);
             paint.setColor(Color.parseColor(num > 4 ? "#f9f6f2" : "#776E65"));
             paint.getTextBounds(value, 0, value.length(), rect);
-//            paint.setFakeBoldText(true);
             paint.setTypeface(Typeface.DEFAULT_BOLD);
             float valueWidth = rect.right - rectF.left;
             float valueHeight = rect.bottom = rect.top;
@@ -96,7 +95,8 @@ public class BlockView extends View {
         } else if (num == 1) {
             setBackgroundResource(R.drawable.ice);
         } else if (num == 0) {
-            canvas.drawColor(Color.TRANSPARENT);
+//            canvas.drawColor(Color.TRANSPARENT);
+            setBackgroundColor(Color.TRANSPARENT);
         }
     }
 
