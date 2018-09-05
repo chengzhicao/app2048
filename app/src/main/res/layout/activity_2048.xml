@@ -1,20 +1,36 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:ads="http://schemas.android.com/apk/res-auto"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".Activity2048">
+    android:background="#F7EDE4"
+    android:gravity="center_horizontal"
+    android:orientation="vertical"
+    tools:context=".GameActivity">
 
-    <com.cheng.app2048.view.View2048
-        android:id="@+id/view2048"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerInParent="true" />
+    <include layout="@layout/include_common" />
 
-    <Button
+    <LinearLayout
+        android:id="@+id/ll_game"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:gravity="center_horizontal"
+        android:paddingBottom="10dp"
+        android:paddingTop="10dp">
+
+        <com.cheng.app2048.view.View2048
+            android:id="@+id/view2048"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+    </LinearLayout>
+
+    <com.google.android.gms.ads.AdView
+        android:id="@+id/adView"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="revoke"
-        android:onClick="revoke"/>
-</RelativeLayout>
+        android:layout_height="50dp"
+        ads:adSize="BANNER"
+        ads:adUnitId="ca-app-pub-3940256099942544/6300978111" />
+</LinearLayout>

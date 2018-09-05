@@ -1,3 +1,20 @@
 <resources>
-    <string name="app_name">app2048</string>
+    <string name="app_name">Challenge 2048</string>
+    <string name="classical">Classical</string>
+    <string name="challenging">Challenging</string>
+    <string name="prop">Prop</string>
+    <string name="game_over">Game Over !</string>
+    <string name="restart">Restart</string>
+    <string name="back_home">Home</string>
+    <string name="new_game">New game</string>
+    <string name="previous">Previous</string>
+    <string name="score">Score</string>
+    <string name="record">Record</string>
+    <string name="tip">Tip:</string>
+    <string name="tip_back">Three steps back at most.</string>
+    <string name="tip_watch_ad">Whether to increase the number of back by watching ads?</string>
+    <string name="yes">OK</string>
+    <string name="next">Next time</string>
+    <string name="tip_wait">The ads is not ready yet, please wait for a while (*^_^*).</string>
+    <string name="tip_exit">Press again and exit.</string>
 </resources>

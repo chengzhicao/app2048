@@ -8,12 +8,13 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.Window;
+import android.widget.Toast;
 
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
 import com.google.android.gms.ads.MobileAds;
 
-public class MainActivity extends AppCompatActivity implements  View.OnClickListener {
+public class MainActivity extends AppCompatActivity implements View.OnClickListener {
     public static final String GAME_MODE = "gameMmode";
     public static final String GAME_MODE_CLASSIC = "ClassicMode";
     public static final String GAME_MODE_CHALLENGE = "ChallengeMode";
@@ -35,7 +36,7 @@ public class MainActivity extends AppCompatActivity implements  View.OnClickList
     }
 
     public void mode1(View view) {
-        Intent intent = new Intent(this, ActivityMode1.class);
+        Intent intent = new Intent(this, GameActivity.class);
         intent.putExtra(GAME_MODE, GAME_MODE_CLASSIC);
         startActivity(intent);
     }
@@ -43,10 +44,9 @@ public class MainActivity extends AppCompatActivity implements  View.OnClickList
     private Dialog dialog;
 
     public void mode2(View view) {
-        Intent intent = new Intent(this, ActivityMode1.class);
+        Intent intent = new Intent(this, GameActivity.class);
         intent.putExtra(GAME_MODE, GAME_MODE_CHALLENGE);
         startActivity(intent);
-//        showDialog();
     }
 
     public void mode3(View view) {
@@ -58,7 +58,6 @@ public class MainActivity extends AppCompatActivity implements  View.OnClickList
             View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_mode, null);
             dialogView.findViewById(R.id.tv_44).setOnClickListener(this);
             dialogView.findViewById(R.id.tv_109).setOnClickListener(this);
-            dialogView.findViewById(R.id.tv_86).setOnClickListener(this);
             dialog = new Dialog(this);
             dialog.setContentView(dialogView);
             Window window = dialog.getWindow();
@@ -73,7 +72,7 @@ public class MainActivity extends AppCompatActivity implements  View.OnClickList
 
     @Override
     public void onClick(View v) {
-        Intent intent = new Intent(this, ActivityMode1.class);
+        Intent intent = new Intent(this, GameActivity.class);
         switch (v.getId()) {
             case R.id.tv_44:
                 intent.putExtra(GAME_MODE, GAME_MODE_PROP_4X4);
@@ -85,11 +84,22 @@ public class MainActivity extends AppCompatActivity implements  View.OnClickList
                 startActivity(intent);
                 dialog.dismiss();
                 break;
-            case R.id.tv_86:
-                dialog.dismiss();
-                break;
             default:
                 break;
+        }
+    }
+
+    private long mPressedTime = 0;
+
+    @Override
+    public void onBackPressed() {
+        long mNowTime = System.currentTimeMillis();
+        if ((mNowTime - mPressedTime) > 2000) {
+            Toast.makeText(this, R.string.tip_exit, Toast.LENGTH_SHORT).show();
+            mPressedTime = mNowTime;
+        } else {//退出程序
+            this.finish();
+            System.exit(0);
         }
     }
 }

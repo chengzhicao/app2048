@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="View2048">
+        <attr name="rowCounts" format="integer" />
+        <attr name="columnCounts" format="integer" />
+        <attr name="fixedCounts" format="integer" />
+    </declare-styleable>
+</resources>

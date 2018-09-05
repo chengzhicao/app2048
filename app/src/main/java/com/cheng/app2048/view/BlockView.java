@@ -78,7 +78,7 @@ class BlockView extends View {
             paint.setColor(Color.parseColor(colors.get(num > 4096 ? 0 : num)));
             canvas.drawRoundRect(rectF, 10, 10, paint);
             if (num < 100) {
-                paint.setTextSize(80);
+                paint.setTextSize(70);
             } else if (num < 1000) {
                 paint.setTextSize(60);
             } else if (num < 10000) {
@@ -96,7 +96,7 @@ class BlockView extends View {
             float valueHeight = rect.bottom = rect.top;
             canvas.drawText(value, (width - valueWidth) / 2, (height - valueHeight) / 2, paint);
         } else if (num == 1) {
-            setBackgroundResource(R.drawable.ice);
+            setBackgroundResource(R.mipmap.ice);
         } else if (num == 0) {
 //            canvas.drawColor(Color.TRANSPARENT);
             setBackgroundColor(Color.TRANSPARENT);

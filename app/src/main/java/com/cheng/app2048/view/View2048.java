@@ -615,9 +615,28 @@ public class View2048 extends GridLayout {
                 }
             }
         }
+        getMaxNum();
         saveModel();
         cacheModel();
         show();
+    }
+
+    private int maxNum;
+
+    /**
+     * 查询最大数
+     */
+    private void getMaxNum() {
+        for (int[] model : models) {
+            for (int m : model) {
+                if (m > maxNum) {
+                    maxNum = m;
+                }
+            }
+        }
+        if (onEventListener != null) {
+            onEventListener.maxNum(maxNum);
+        }
     }
 
     /**

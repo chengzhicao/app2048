@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">挑战2048</string>
+    <string name="classical">经典模式</string>
+    <string name="challenging">挑战模式</string>
+    <string name="prop">道具模式</string>
+    <string name="game_over">游戏结束！</string>
+    <string name="restart">重新开始</string>
+    <string name="back_home">返回主页</string>
+    <string name="new_game">新游戏</string>
+    <string name="previous">撤销</string>
+    <string name="score">分数</string>
+    <string name="record">记录</string>
+    <string name="tip">提示：</string>
+    <string name="tip_back">最多后退三步。</string>
+    <string name="tip_watch_ad">是否通过看广告增加后退次数？</string>
+    <string name="yes">好的</string>
+    <string name="next">下次</string>
+    <string name="tip_wait">广告还没有准备好，请等一会吧(*^_^*)</string>
+    <string name="tip_exit">再按一次退出程序</string>
+</resources>

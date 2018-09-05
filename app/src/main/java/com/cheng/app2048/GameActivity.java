@@ -11,18 +11,19 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.cheng.app2048.view.OnEventListener;
 import com.cheng.app2048.view.View2048;
+import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
+import com.google.android.gms.ads.InterstitialAd;
 import com.google.android.gms.ads.MobileAds;
 import com.google.android.gms.ads.reward.RewardItem;
 import com.google.android.gms.ads.reward.RewardedVideoAd;
 import com.google.android.gms.ads.reward.RewardedVideoAdListener;
 
-public class ActivityMode1 extends AppCompatActivity implements RewardedVideoAdListener, OnEventListener, View.OnClickListener {
+public class GameActivity extends AppCompatActivity implements RewardedVideoAdListener, OnEventListener, View.OnClickListener {
     private View2048 view2048;
     private TextView tvScore;
     private TextView tvHighest;
@@ -33,6 +34,10 @@ public class ActivityMode1 extends AppCompatActivity implements RewardedVideoAdL
     private static final String AD_UNIT_ID = "ca-app-pub-3940256099942544/5224354917";
     private static final String APP_ID = "ca-app-pub-3940256099942544~3347511713";
     private Dialog dialog;
+    /**
+     * 插屏广告
+     */
+    private InterstitialAd mInterstitialAd;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,14 +58,27 @@ public class ActivityMode1 extends AppCompatActivity implements RewardedVideoAdL
         mRewardedVideoAd.setRewardedVideoAdListener(this);
         loadRewardedVideoAd();
 
+        mInterstitialAd = new InterstitialAd(this);
+        mInterstitialAd.setAdUnitId("ca-app-pub-3940256099942544/1033173712");
+        mInterstitialAd.loadAd(new AdRequest.Builder().build());
+        mInterstitialAd.setAdListener(new AdListener() {
+            @Override
+            public void onAdClosed() {
+                mInterstitialAd.loadAd(new AdRequest.Builder().build());
+            }
+
+        });
+
         view2048 = findViewById(R.id.view2048);
         gameMode = getIntent().getStringExtra(MainActivity.GAME_MODE);
         view2048.setGameMode(gameMode);
         view2048.addEventListener(this);
         tvScore = findViewById(R.id.tv_score);
+        tvScore.setText(getString(R.string.score) + "\n" + 0);
         cbSound = findViewById(R.id.iv_sound);
         cbSound.setOnClickListener(this);
         tvHighest = findViewById(R.id.tv_highest);
+        tvHighest.setText(getString(R.string.record) + "\n" + 0);
         LinearLayout llGame = findViewById(R.id.ll_game);
         if (gameMode.equals(MainActivity.GAME_MODE_CLASSIC) || gameMode.equals(MainActivity.GAME_MODE_PROP_4X4)) {
             llGame.setPadding(llGame.getPaddingTop() * 3, llGame.getPaddingTop(), llGame.getPaddingTop() * 3, llGame.getPaddingBottom());
@@ -68,7 +86,7 @@ public class ActivityMode1 extends AppCompatActivity implements RewardedVideoAdL
 
         if (view2048.isContinueGame()) {
             view2048.continueGame();
-            tvScore.setText("分数\n" + view2048.getScore());
+            tvScore.setText(getString(R.string.score) + "\n" + view2048.getScore());
         } else if (gameMode != null) {
             switch (gameMode) {
                 case MainActivity.GAME_MODE_CLASSIC:
@@ -86,7 +104,7 @@ public class ActivityMode1 extends AppCompatActivity implements RewardedVideoAdL
             }
         }
         cbSound.setImageResource(view2048.isPlaySound() ? R.mipmap.sound_on : R.mipmap.sound_off);
-        tvHighest.setText("最高分\n" + view2048.getHighestScore());
+        tvHighest.setText(getString(R.string.record) + "\n" + view2048.getHighestScore());
     }
 
     public void revoke(View view) {
@@ -95,44 +113,55 @@ public class ActivityMode1 extends AppCompatActivity implements RewardedVideoAdL
                 revokeCounts++;
             } else {
                 AlertDialog.Builder builder = new AlertDialog.Builder(this);
-                builder.setTitle("提示：").
-                        setMessage("最多回退到前三步。").
+                builder.setTitle(R.string.tip).
+                        setMessage(R.string.tip_back).
                         show();
             }
         } else {
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            builder.setTitle("提示：").
-                    setMessage("是否要观看广告增加回退次数？").
-                    setPositiveButton("是", new DialogInterface.OnClickListener() {
+            builder.setTitle(R.string.tip).
+                    setMessage(R.string.tip_watch_ad).
+                    setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
                             showAd();
                         }
                     }).
-                    setNegativeButton("下次吧", null);
+                    setNegativeButton(R.string.next, null);
             builder.show();
         }
     }
 
     public void newGame(View view) {
         view2048.newGame();
-        tvScore.setText("分数\n" + 0);
+        tvScore.setText(getString(R.string.score) + "\n" + 0);
         revokeCounts = 0;
     }
 
     @Override
-    public void scoreListener(int everyScore) {
-        tvScore.setText("分数\n" + everyScore);
+    public void scoreListener(int score) {
+        tvScore.setText(getString(R.string.score) + "\n" + score);
     }
 
     @Override
     public void highestListener(int highestScore) {
-        tvHighest.setText("最高分\n" + highestScore);
+        tvHighest.setText(getString(R.string.record) + "\n" + highestScore);
+    }
+
+    private int maxNum;
+
+    @Override
+    public void maxNum(int maxNum) {
+        if (this.maxNum != 0 && maxNum > this.maxNum && maxNum % 512 == 0) {
+            if (mInterstitialAd.isLoaded()) {
+                mInterstitialAd.show();
+            }
+        }
+        this.maxNum = maxNum;
     }
 
     @Override
     public void gameOver() {
-        Toast.makeText(ActivityMode1.this, "game over", Toast.LENGTH_SHORT).show();
         if (dialog == null) {
             View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_gameover, null);
             dialogView.findViewById(R.id.tv_newgame).setOnClickListener(this);
@@ -150,19 +179,8 @@ public class ActivityMode1 extends AppCompatActivity implements RewardedVideoAdL
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.iv_sound:
-                if (dialog == null) {
-                    View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_gameover, null);
-                    dialogView.findViewById(R.id.tv_newgame).setOnClickListener(this);
-                    dialogView.findViewById(R.id.tv_backmenu).setOnClickListener(this);
-                    dialog = new Dialog(this);
-                    dialog.setContentView(dialogView);
-                } else {
-                    if (!dialog.isShowing()) {
-                        dialog.show();
-                    }
-                }
-//                view2048.setPlaySound(!view2048.isPlaySound());
-//                cbSound.setImageResource(view2048.isPlaySound() ? R.mipmap.sound_on : R.mipmap.sound_off);
+                view2048.setPlaySound(!view2048.isPlaySound());
+                cbSound.setImageResource(view2048.isPlaySound() ? R.mipmap.sound_on : R.mipmap.sound_off);
                 break;
             case R.id.tv_newgame:
                 if (dialog.isShowing()) {
@@ -191,56 +209,55 @@ public class ActivityMode1 extends AppCompatActivity implements RewardedVideoAdL
             mRewardedVideoAd.show();
         } else {
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            builder.setTitle("提示：").setMessage("广告还没有准备好，请等一会吧(*^_^*)").show();
+            builder.setTitle(R.string.tip).setMessage(R.string.tip_wait).show();
         }
     }
 
     @Override
     public void onRewardedVideoAdLeftApplication() {
-        Toast.makeText(this, "onRewardedVideoAdLeftApplication", Toast.LENGTH_SHORT).show();
+//        Toast.makeText(this, "onRewardedVideoAdLeftApplication", Toast.LENGTH_SHORT).show();
     }
 
     @Override
     public void onRewardedVideoAdClosed() {
-        revokeCounts = 0;
-        Toast.makeText(this, "onRewardedVideoAdClosed", Toast.LENGTH_SHORT).show();
+//        Toast.makeText(this, "onRewardedVideoAdClosed", Toast.LENGTH_SHORT).show();
         // Preload the next video ad.
         loadRewardedVideoAd();
     }
 
     @Override
     public void onRewardedVideoAdFailedToLoad(int errorCode) {
-        Toast.makeText(this, "onRewardedVideoAdFailedToLoad", Toast.LENGTH_SHORT).show();
+//        Toast.makeText(this, "onRewardedVideoAdFailedToLoad", Toast.LENGTH_SHORT).show();
         loadRewardedVideoAd();
     }
 
     @Override
     public void onRewardedVideoAdLoaded() {
-        Toast.makeText(this, "onRewardedVideoAdLoaded", Toast.LENGTH_SHORT).show();
+//        Toast.makeText(this, "onRewardedVideoAdLoaded", Toast.LENGTH_SHORT).show();
     }
 
     @Override
     public void onRewardedVideoAdOpened() {
-        Toast.makeText(this, "onRewardedVideoAdOpened", Toast.LENGTH_SHORT).show();
+//        Toast.makeText(this, "onRewardedVideoAdOpened", Toast.LENGTH_SHORT).show();
     }
 
     @Override
     public void onRewarded(RewardItem reward) {
-        Toast.makeText(this,
-                String.format(" onRewarded! currency: %s amount: %d", reward.getType(),
-                        reward.getAmount()),
-                Toast.LENGTH_SHORT).show();
-//        addCoins(reward.getAmount());
+        revokeCounts = 0;
+//        Toast.makeText(this,
+//                String.format(" onRewarded! currency: %s amount: %d", reward.getType(),
+//                        reward.getAmount()),
+//                Toast.LENGTH_SHORT).show();
     }
 
     @Override
     public void onRewardedVideoStarted() {
-        Toast.makeText(this, "onRewardedVideoStarted", Toast.LENGTH_SHORT).show();
+//        Toast.makeText(this, "onRewardedVideoStarted", Toast.LENGTH_SHORT).show();
     }
 
     @Override
     public void onRewardedVideoCompleted() {
-        Toast.makeText(this, "onRewardedVideoCompleted", Toast.LENGTH_SHORT).show();
+//        Toast.makeText(this, "onRewardedVideoCompleted", Toast.LENGTH_SHORT).show();
     }
 
     @Override
