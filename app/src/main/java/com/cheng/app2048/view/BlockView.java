@@ -10,6 +10,7 @@ import android.graphics.Typeface;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.util.SparseArray;
+import android.util.TypedValue;
 import android.view.View;
 
 import com.cheng.app2048.R;
@@ -22,9 +23,14 @@ class BlockView extends View {
     private int num;
     private Rect rect;
     private SparseArray<String> colors = new SparseArray<>(12);
+    private Context mContext;
+    private int sizeMode;
+    static final int SIZE_LARGE = 0X00A1;
+    static final int SIZE_SMALL = 0X00B1;
 
-    public BlockView(Context context) {
+    public BlockView(Context context, int sizeMode) {
         this(context, null);
+        this.sizeMode = sizeMode;
     }
 
     public BlockView(Context context, @Nullable AttributeSet attrs) {
@@ -33,6 +39,7 @@ class BlockView extends View {
 
     public BlockView(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
+        this.mContext = context;
         init();
     }
 
@@ -77,17 +84,27 @@ class BlockView extends View {
         if (num > 1) {
             paint.setColor(Color.parseColor(colors.get(num > 4096 ? 0 : num)));
             canvas.drawRoundRect(rectF, 10, 10, paint);
-            if (num < 100) {
-                paint.setTextSize(70);
-            } else if (num < 1000) {
-                paint.setTextSize(60);
-            } else if (num < 10000) {
-                paint.setTextSize(50);
-            } else if (num < 100000) {
-                paint.setTextSize(40);
+            float textSize;
+            if (sizeMode == SIZE_LARGE) {
+                if (num < 10000) {
+                    textSize = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 20, mContext.getResources().getDisplayMetrics());
+                } else {
+                    textSize = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 18, mContext.getResources().getDisplayMetrics());
+                }
             } else {
-                paint.setTextSize(30);
+                if (num < 100) {
+                    textSize = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 18, mContext.getResources().getDisplayMetrics());
+                } else if (num < 1000) {
+                    textSize = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 14, mContext.getResources().getDisplayMetrics());
+                } else if (num < 10000) {
+                    textSize = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 12, mContext.getResources().getDisplayMetrics());
+                } else if (num < 100000) {
+                    textSize = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 10, mContext.getResources().getDisplayMetrics());
+                } else {
+                    textSize = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 8, mContext.getResources().getDisplayMetrics());
+                }
             }
+            paint.setTextSize(textSize);
             String value = String.valueOf(num);
             paint.setColor(Color.parseColor(num > 4 ? "#f9f6f2" : "#776E65"));
             paint.getTextBounds(value, 0, value.length(), rect);

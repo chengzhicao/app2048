@@ -39,7 +39,7 @@ public class View2048 extends GridLayout {
     /**
      * 是否播放声音
      */
-    private boolean isPlaySound;
+    private boolean isPlaySound = true;
 
     /**
      * 行数
@@ -218,7 +218,12 @@ public class View2048 extends GridLayout {
         for (int i = 0; i < rowCounts; i++) {
             for (int j = 0; j < columnCounts; j++) {
                 int num = models[i][j];
-                BlockView textView = new BlockView(mContext);
+                BlockView textView;
+                if (rowCounts <= 4 && columnCounts <= 4) {
+                    textView = new BlockView(mContext, BlockView.SIZE_LARGE);
+                } else {
+                    textView = new BlockView(mContext, BlockView.SIZE_SMALL);
+                }
                 textView.setText(num);
                 tvs.put(i * columnCounts + j, textView);
                 addView(textView);
@@ -608,17 +613,20 @@ public class View2048 extends GridLayout {
             ObjectAnimator.ofFloat(tvs.get(row * columnCounts + col), "scaleY", 0, 1).setDuration(ANIMATION_TIME).start();
             models[row][col] = newValue;
             isModelChange = false;
+            getMaxNum();
+            saveModel();
+            cacheModel();
+            show();
             //填充完最后一个空检查是否game over
             if (zeroModelPoints.size() == 1) {
-                if (isGameOver() && onEventListener != null) {
-                    onEventListener.gameOver();
+                if (isGameOver()) {
+                    helper.saveContinueGame(false);
+                    if (onEventListener != null) {
+                        onEventListener.gameOver();
+                    }
                 }
             }
         }
-        getMaxNum();
-        saveModel();
-        cacheModel();
-        show();
     }
 
     private int maxNum;
@@ -798,7 +806,12 @@ public class View2048 extends GridLayout {
                 for (int j = 0; j < columnCounts; j++) {
                     int num = Integer.parseInt(split[i * columnCounts + j]);
                     models[i][j] = num;
-                    BlockView textView = new BlockView(mContext);
+                    BlockView textView;
+                    if (rowCounts <= 4 && columnCounts <= 4) {
+                        textView = new BlockView(mContext, BlockView.SIZE_LARGE);
+                    } else {
+                        textView = new BlockView(mContext, BlockView.SIZE_SMALL);
+                    }
                     textView.setText(num);
                     tvs.put(i * columnCounts + j, textView);
                     addView(textView);

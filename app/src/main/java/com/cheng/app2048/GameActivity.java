@@ -168,10 +168,9 @@ public class GameActivity extends AppCompatActivity implements RewardedVideoAdLi
             dialogView.findViewById(R.id.tv_backmenu).setOnClickListener(this);
             dialog = new Dialog(this);
             dialog.setContentView(dialogView);
-        } else {
-            if (!dialog.isShowing()) {
-                dialog.show();
-            }
+        }
+        if (!dialog.isShowing()) {
+            dialog.show();
         }
     }
 

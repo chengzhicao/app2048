@@ -13,7 +13,7 @@
     <string name="record">记录</string>
     <string name="tip">提示：</string>
     <string name="tip_back">最多后退三步。</string>
-    <string name="tip_watch_ad">是否通过看广告增加后退次数？</string>
+    <string name="tip_watch_ad">是否通过观看广告增加3次后退机会？</string>
     <string name="yes">好的</string>
     <string name="next">下次</string>
     <string name="tip_wait">广告还没有准备好，请等一会吧(*^_^*)</string>

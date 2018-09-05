@@ -12,7 +12,7 @@
     <string name="record">Record</string>
     <string name="tip">Tip:</string>
     <string name="tip_back">Three steps back at most.</string>
-    <string name="tip_watch_ad">Whether to increase the number of back by watching ads?</string>
+    <string name="tip_watch_ad">Whether to increase the chance of back off 3 times by watching ads?</string>
     <string name="yes">OK</string>
     <string name="next">Next time</string>
     <string name="tip_wait">The ads is not ready yet, please wait for a while (*^_^*).</string>
