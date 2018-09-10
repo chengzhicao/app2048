@@ -586,21 +586,57 @@ public class View2048 extends GridLayout {
     }
 
     /**
+     * 是否动态产生固定数字
+     */
+    private boolean isDynamicProductFixed;
+
+    /**
+     * 步数
+     */
+    private int step;
+
+    /**
+     * 能动态改变固定方块的步数
+     */
+    private int productFixedNumStep = 3;
+
+    /**
+     * 产生固定数数量基数
+     */
+    private int fixedNumBase = 3;
+
+    /**
      * 随机添加一个数，并改变视图，注意要在之前的位移动画全部执行完成后再执行，否则此方法中的动画会在位移动画之前执行从而影响动美观
      */
     private void changeView() {
         //只有当数组发生变化时才会产生新数
         if (isModelChange) {
-            //取出值为0的坐标，从中随机取出一个坐标添加一个新值
+            //取出值为0或1的坐标，从中随机取出一个坐标添加一个新值
             zeroModelPoints.clear();
+            step++;
             for (int i = 0; i < rowCounts; i++) {
                 for (int j = 0; j < columnCounts; j++) {
-                    if (models[i][j] == 0) {
-                        zeroModelPoints.add(new Point(i, j));
+                    if (isDynamicProductFixed && step == productFixedNumStep) {
+                        if (models[i][j] == 0 || models[i][j] == 1) {
+                            if (models[i][j] == 1) {
+                                models[i][j] = 0;
+                            }
+                            zeroModelPoints.add(new Point(i, j));
+                        }
+                    } else {
+                        if (models[i][j] == 0) {
+                            zeroModelPoints.add(new Point(i, j));
+                        }
                     }
                 }
             }
-            Point point = zeroModelPoints.get(random.nextInt(zeroModelPoints.size()));
+            int position = random.nextInt(zeroModelPoints.size());
+            Point point = zeroModelPoints.get(position);
+            zeroModelPoints.remove(position);
+            if (isDynamicProductFixed && step == 3) {
+                productFixedNum();
+                step = 0;
+            }
             int newValue = 2;
             //产生4的概率为20%
             if (random.nextInt(10) >= 8) {
@@ -618,7 +654,7 @@ public class View2048 extends GridLayout {
             cacheModel();
             show();
             //填充完最后一个空检查是否game over
-            if (zeroModelPoints.size() == 1) {
+            if (zeroModelPoints.size() == 0) {
                 if (isGameOver()) {
                     helper.saveContinueGame(false);
                     if (onEventListener != null) {
@@ -626,6 +662,25 @@ public class View2048 extends GridLayout {
                     }
                 }
             }
+        }
+    }
+
+    /**
+     * 随机产生固定数字
+     */
+    private void productFixedNum() {
+        //当产生的固定方块数量大于空的数量时，置为1
+        int fixedNumCounts = random.nextInt(fixedNumBase) + 2;
+        if (fixedNumCounts > zeroModelPoints.size()) {
+            fixedNumCounts = zeroModelPoints.size();
+        }
+        for (int i = 0; i < fixedNumCounts; i++) {
+            int position = random.nextInt(zeroModelPoints.size());
+            Point point = zeroModelPoints.get(position);
+            zeroModelPoints.remove(position);
+            int row = point.x;
+            int col = point.y;
+            models[row][col] = 1;
         }
     }
 
@@ -794,6 +849,9 @@ public class View2048 extends GridLayout {
      * 继续游戏
      */
     public void continueGame() {
+        isDynamicProductFixed = helper.getIsDynamicProductFixed();
+        productFixedNumStep = helper.getProductFixedNumStep();
+        fixedNumBase = helper.getFixedNumBase();
         totalScore = helper.getScore();
         String diskModels = helper.getModels();
         rowCounts = helper.getRowCounts();
@@ -870,11 +928,29 @@ public class View2048 extends GridLayout {
     /**
      * 设置结构
      */
-    public void setStructure(int rowCounts, int columnCounts, int fixedCounts) {
+    public void setStructure(int rowCounts, int columnCounts, int fixedCounts, boolean isDynamicProductFixed, int productFixedNumStep, int fixedNumBase) {
         this.rowCounts = rowCounts;
+        if (this.rowCounts < 0) {
+            this.rowCounts = 0;
+        }
         this.columnCounts = columnCounts;
+        if (this.columnCounts < 0) {
+            this.columnCounts = 0;
+        }
         this.fixedCounts = fixedCounts;
-        helper.saveFixedCounts(rowCounts, columnCounts, fixedCounts);
+        if (this.fixedCounts < 0) {
+            this.fixedCounts = 0;
+        }
+        this.isDynamicProductFixed = isDynamicProductFixed;
+        this.productFixedNumStep = productFixedNumStep;
+        if (this.productFixedNumStep < 1) {
+            this.productFixedNumStep = 1;
+        }
+        this.fixedNumBase = fixedNumBase;
+        if (this.fixedNumBase < 1) {
+            this.fixedNumBase = 1;
+        }
+        helper.saveFixedCounts(rowCounts, columnCounts, fixedCounts, isDynamicProductFixed, productFixedNumStep, fixedNumBase);
         initView();
     }
 

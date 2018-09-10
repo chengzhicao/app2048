@@ -12,6 +12,9 @@ class SharedPreferencesHelper {
     private final String ROW_COUNTS = "rowCounts";
     private final String COLUMN_COUNTS = "columnCounts";
     private final String FIXED_COUNTS = "fixedCounts";
+    private final String IS_DYNAMIC_PRODUCT_FIXED = "isDynamicProductFixed";
+    private final String PRODUCT_FIXED_NUM_STEP = "productFixedNumStep";
+    private final String FIXED_NUM_BASE = "getFixedNumBase";
 
     void setSpName(Context context, String gameMode) {
         if (sp == null && gameMode != null) {
@@ -71,6 +74,24 @@ class SharedPreferencesHelper {
         return 0;
     }
 
+    boolean getIsDynamicProductFixed() {
+        return sp != null && sp.getBoolean(IS_DYNAMIC_PRODUCT_FIXED, false);
+    }
+
+    int getProductFixedNumStep() {
+        if (sp != null) {
+            return sp.getInt(PRODUCT_FIXED_NUM_STEP, 0);
+        }
+        return 0;
+    }
+
+    int getFixedNumBase() {
+        if (sp != null) {
+            return sp.getInt(FIXED_NUM_BASE, 0);
+        }
+        return 0;
+    }
+
     /**
      * 保存是否继续游戏状态
      */
@@ -101,12 +122,15 @@ class SharedPreferencesHelper {
         }
     }
 
-    void saveFixedCounts(int rowCounts, int columnCounts, int fixedCounts) {
+    void saveFixedCounts(int rowCounts, int columnCounts, int fixedCounts, boolean isDynamicProductFixed, int productFixedNumStep, int fixedNumBase) {
         if (sp != null) {
             SharedPreferences.Editor edit = sp.edit();
             edit.putInt(ROW_COUNTS, rowCounts);
             edit.putInt(COLUMN_COUNTS, columnCounts);
             edit.putInt(FIXED_COUNTS, fixedCounts);
+            edit.putBoolean(IS_DYNAMIC_PRODUCT_FIXED, isDynamicProductFixed);
+            edit.putInt(PRODUCT_FIXED_NUM_STEP, productFixedNumStep);
+            edit.putInt(FIXED_NUM_BASE, fixedNumBase);
             edit.apply();
         }
     }
