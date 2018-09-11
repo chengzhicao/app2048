@@ -95,8 +95,14 @@ public class GameActivity extends AppCompatActivity implements RewardedVideoAdLi
                 case MainActivity.GAME_MODE_CHALLENGE:
                     view2048.setStructure(10, 9, 0, false, 3, 0);
                     break;
+                case MainActivity.GAME_MODE_PROP_4X4_FIXED:
+                    view2048.setStructure(4, 4, 1, false, 3, 1);
+                    break;
                 case MainActivity.GAME_MODE_PROP_4X4:
                     view2048.setStructure(4, 4, 1, true, 3, 1);
+                    break;
+                case MainActivity.GAME_MODE_PROP_10X9_FIXED:
+                    view2048.setStructure(10, 9, 3, false, 3, 5);
                     break;
                 case MainActivity.GAME_MODE_PROP_10X9:
                     view2048.setStructure(10, 9, 3, true, 3, 5);
@@ -171,6 +177,7 @@ public class GameActivity extends AppCompatActivity implements RewardedVideoAdLi
         }
         if (!dialog.isShowing()) {
             dialog.show();
+            dialog.setCancelable(false);
         }
     }
 

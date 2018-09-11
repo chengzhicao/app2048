@@ -18,4 +18,6 @@
     <string name="next">下次</string>
     <string name="tip_wait">广告还没有准备好，请等一会吧(*^_^*)</string>
     <string name="tip_exit">再按一次退出程序</string>
+    <string name="four_four">4x4（随机）</string>
+    <string name="ten_nine">10*9（随机）</string>
 </resources>

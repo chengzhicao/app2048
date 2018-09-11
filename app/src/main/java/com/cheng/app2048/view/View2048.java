@@ -670,7 +670,12 @@ public class View2048 extends GridLayout {
      */
     private void productFixedNum() {
         //当产生的固定方块数量大于空的数量时，置为1
-        int fixedNumCounts = random.nextInt(fixedNumBase) + 2;
+        int fixedNumCounts;
+        if (fixedNumBase != 1) {
+            fixedNumCounts = random.nextInt(fixedNumBase) + 2;
+        } else {
+            fixedNumCounts = 1;
+        }
         if (fixedNumCounts > zeroModelPoints.size()) {
             fixedNumCounts = zeroModelPoints.size();
         }

@@ -17,4 +17,6 @@
     <string name="next">下次</string>
     <string name="tip_wait">廣告還沒有準備好，請等一會吧(*^_^*)</string>
     <string name="tip_exit">再按一次退出程式</string>
+    <string name="four_four">4x4（隨機）</string>
+    <string name="ten_nine">10*9（隨機）</string>
 </resources>

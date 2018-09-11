@@ -10,8 +10,8 @@
     android:padding="20dp">
 
     <TextView
-        android:id="@+id/tv_44"
-        android:layout_width="140dp"
+        android:id="@+id/tv_44_fixed"
+        android:layout_width="180dp"
         android:layout_height="35dp"
         android:background="@mipmap/flower"
         android:gravity="center"
@@ -20,13 +20,35 @@
         android:textSize="25sp" />
 
     <TextView
-        android:id="@+id/tv_109"
-        android:layout_width="140dp"
+        android:id="@+id/tv_44"
+        android:layout_width="180dp"
+        android:layout_height="35dp"
+        android:layout_marginTop="20dp"
+        android:background="@mipmap/flower"
+        android:gravity="center"
+        android:text="@string/four_four"
+        android:textColor="@android:color/white"
+        android:textSize="25sp" />
+
+    <TextView
+        android:id="@+id/tv_109_fixed"
+        android:layout_width="180dp"
         android:layout_height="35dp"
         android:layout_marginTop="20dp"
         android:background="@mipmap/flower"
         android:gravity="center"
         android:text="10*9"
+        android:textColor="@android:color/white"
+        android:textSize="25sp" />
+
+    <TextView
+        android:id="@+id/tv_109"
+        android:layout_width="180dp"
+        android:layout_height="35dp"
+        android:layout_marginTop="20dp"
+        android:background="@mipmap/flower"
+        android:gravity="center"
+        android:text="@string/ten_nine"
         android:textColor="@android:color/white"
         android:textSize="25sp" />
 

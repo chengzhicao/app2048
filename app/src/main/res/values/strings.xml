@@ -17,4 +17,6 @@
     <string name="next">Next time</string>
     <string name="tip_wait">The ads is not ready yet, please wait for a while (*^_^*).</string>
     <string name="tip_exit">Press again and exit.</string>
+    <string name="four_four">4x4 (random)</string>
+    <string name="ten_nine">10*9 (random)</string>
 </resources>

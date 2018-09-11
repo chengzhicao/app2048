@@ -18,7 +18,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public static final String GAME_MODE = "gameMmode";
     public static final String GAME_MODE_CLASSIC = "ClassicMode";
     public static final String GAME_MODE_CHALLENGE = "ChallengeMode";
+    public static final String GAME_MODE_PROP_4X4_FIXED = "PropMode_4x4_fixed";
     public static final String GAME_MODE_PROP_4X4 = "PropMode_4x4";
+    public static final String GAME_MODE_PROP_10X9_FIXED = "PropMode_10x9_fixed";
     public static final String GAME_MODE_PROP_10X9 = "PropMode_10x9";
 
     @Override
@@ -56,7 +58,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private void showDialog() {
         if (dialog == null) {
             View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_mode, null);
+            dialogView.findViewById(R.id.tv_44_fixed).setOnClickListener(this);
             dialogView.findViewById(R.id.tv_44).setOnClickListener(this);
+            dialogView.findViewById(R.id.tv_109_fixed).setOnClickListener(this);
             dialogView.findViewById(R.id.tv_109).setOnClickListener(this);
             dialog = new Dialog(this);
             dialog.setContentView(dialogView);
@@ -74,8 +78,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void onClick(View v) {
         Intent intent = new Intent(this, GameActivity.class);
         switch (v.getId()) {
+            case R.id.tv_44_fixed:
+                intent.putExtra(GAME_MODE, GAME_MODE_PROP_4X4_FIXED);
+                startActivity(intent);
+                dialog.dismiss();
+                break;
             case R.id.tv_44:
                 intent.putExtra(GAME_MODE, GAME_MODE_PROP_4X4);
+                startActivity(intent);
+                dialog.dismiss();
+                break;
+            case R.id.tv_109_fixed:
+                intent.putExtra(GAME_MODE, GAME_MODE_PROP_10X9_FIXED);
                 startActivity(intent);
                 dialog.dismiss();
                 break;
