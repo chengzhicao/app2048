@@ -10,6 +10,17 @@ android {
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
+
+    signingConfigs {
+        release {
+            storeFile file("app2048.jks")
+            storePassword "cheng123456"
+            keyAlias "key0"
+            keyPassword "cheng123456"
+        }
+
+    }
+
     buildTypes {
         release {
             minifyEnabled true
@@ -18,6 +29,7 @@ android {
         debug {
             minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
         }
     }
 }

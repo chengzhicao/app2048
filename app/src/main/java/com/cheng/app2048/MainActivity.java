@@ -22,6 +22,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public static final String GAME_MODE_PROP_4X4 = "PropMode_4x4";
     public static final String GAME_MODE_PROP_10X9_FIXED = "PropMode_10x9_fixed";
     public static final String GAME_MODE_PROP_10X9 = "PropMode_10x9";
+    private final String APP_ID = "ca-app-pub-3940256099942544~3347511713";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,7 +32,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         if (supportActionBar != null) {
             supportActionBar.hide();
         }
-        MobileAds.initialize(this, "ca-app-pub-3940256099942544~3347511713");
+        MobileAds.initialize(this, APP_ID);
         AdView mAdView = findViewById(R.id.adView);
         AdRequest adRequest = new AdRequest.Builder().build();
         mAdView.loadAd(adRequest);

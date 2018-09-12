@@ -97,11 +97,11 @@ class BlockView extends View {
                 } else if (num < 1000) {
                     textSize = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 14, mContext.getResources().getDisplayMetrics());
                 } else if (num < 10000) {
-                    textSize = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 12, mContext.getResources().getDisplayMetrics());
+                    textSize = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 11, mContext.getResources().getDisplayMetrics());
                 } else if (num < 100000) {
-                    textSize = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 10, mContext.getResources().getDisplayMetrics());
+                    textSize = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 9, mContext.getResources().getDisplayMetrics());
                 } else {
-                    textSize = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 8, mContext.getResources().getDisplayMetrics());
+                    textSize = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 7, mContext.getResources().getDisplayMetrics());
                 }
             }
             paint.setTextSize(textSize);
@@ -111,7 +111,7 @@ class BlockView extends View {
             paint.setTypeface(Typeface.DEFAULT_BOLD);
             float valueWidth = rect.right - rectF.left;
             float valueHeight = rect.bottom = rect.top;
-            canvas.drawText(value, (width - valueWidth) / 2, (height - valueHeight) / 2, paint);
+            canvas.drawText(value, (width - valueWidth) / 2 - 2, (height - valueHeight) / 2, paint);
         } else if (num == 1) {
             setBackgroundResource(R.mipmap.ice);
         } else if (num == 0) {

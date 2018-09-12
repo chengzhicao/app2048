@@ -31,8 +31,8 @@ public class GameActivity extends AppCompatActivity implements RewardedVideoAdLi
     private String gameMode;
     private RewardedVideoAd mRewardedVideoAd;
     private int revokeCounts;
-    private static final String AD_UNIT_ID = "ca-app-pub-3940256099942544/5224354917";
-    private static final String APP_ID = "ca-app-pub-3940256099942544~3347511713";
+    private static final String REWARD_AD_UNIT_ID = "ca-app-pub-3940256099942544/5224354917";
+    private static final String INTERSTITIAL_AD_UNIT_ID = "ca-app-pub-3940256099942544/1033173712";
     private Dialog dialog;
     /**
      * 插屏广告
@@ -49,7 +49,6 @@ public class GameActivity extends AppCompatActivity implements RewardedVideoAdLi
             supportActionBar.hide();
         }
 
-        MobileAds.initialize(this, APP_ID);
         AdView mAdView = findViewById(R.id.adView);
         AdRequest adRequest = new AdRequest.Builder().build();
         mAdView.loadAd(adRequest);
@@ -59,7 +58,7 @@ public class GameActivity extends AppCompatActivity implements RewardedVideoAdLi
         loadRewardedVideoAd();
 
         mInterstitialAd = new InterstitialAd(this);
-        mInterstitialAd.setAdUnitId("ca-app-pub-3940256099942544/1033173712");
+        mInterstitialAd.setAdUnitId(INTERSTITIAL_AD_UNIT_ID);
         mInterstitialAd.loadAd(new AdRequest.Builder().build());
         mInterstitialAd.setAdListener(new AdListener() {
             @Override
@@ -205,7 +204,7 @@ public class GameActivity extends AppCompatActivity implements RewardedVideoAdLi
 
     private void loadRewardedVideoAd() {
         if (!mRewardedVideoAd.isLoaded()) {
-            mRewardedVideoAd.loadAd(AD_UNIT_ID,
+            mRewardedVideoAd.loadAd(REWARD_AD_UNIT_ID,
                     new AdRequest.Builder().build());
         }
     }
