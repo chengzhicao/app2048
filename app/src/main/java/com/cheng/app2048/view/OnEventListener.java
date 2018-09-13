@@ -1,5 +1,7 @@
 package com.cheng.app2048.view;
 
+import java.util.List;
+
 public interface OnEventListener {
     /**
      * 分数监听
@@ -12,9 +14,9 @@ public interface OnEventListener {
     void highestListener(int highestScore);
 
     /**
-     * 最大数字监听
+     * 每次结合的数值
      */
-    void maxNum(int maxNum);
+    void composeNums(List<Integer> composeNums);
 
     /**
      * 游戏结束

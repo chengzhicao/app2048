@@ -362,6 +362,7 @@ public class View2048 extends GridLayout {
                 everyScore = 0;
                 isMerge = false;
                 animators.clear();
+                composeNums.clear();
                 if (Math.sqrt(Math.pow((currentX - downX), 2) + Math.pow((currentY - downY), 2)) > 20) {
                     if (currentX - downX > 0) {//右
                         if (currentY > downY) {//下
@@ -405,6 +406,11 @@ public class View2048 extends GridLayout {
         return true;
     }
 
+    /**
+     * 每次结合的方块数值
+     */
+    private List<Integer> composeNums = new ArrayList<>();
+
     private void left() {
         saveBeforeModel();
         for (int i = 0; i < rowCounts; i++) {
@@ -419,6 +425,7 @@ public class View2048 extends GridLayout {
                         if (models[i][j] == models[i][j - skip]) {
                             models[i][j - skip] += models[i][j];
                             models[i][j] = 0;
+                            composeNums.add(models[i][j - skip]);
                             preTranslateAnimation(i * columnCounts + j, i * columnCounts + j - skip, true, X);
                         } else {
                             if (skip > 1) {
@@ -458,6 +465,7 @@ public class View2048 extends GridLayout {
                         if (models[i][j] == models[i - skip][j]) {
                             models[i - skip][j] += models[i][j];
                             models[i][j] = 0;
+                            composeNums.add(models[i - skip][j]);
                             preTranslateAnimation(i * columnCounts + j, (i - skip) * columnCounts + j, true, Y);
                         } else {
                             if (skip > 1) {
@@ -496,6 +504,7 @@ public class View2048 extends GridLayout {
                         if (models[i][j] == models[i][j + skip]) {
                             models[i][j + skip] += models[i][j];
                             models[i][j] = 0;
+                            composeNums.add(models[i][j + skip]);
                             preTranslateAnimation(i * columnCounts + j, i * columnCounts + j + skip, true, X);
                         } else {
                             if (skip > 1) {
@@ -534,6 +543,7 @@ public class View2048 extends GridLayout {
                         if (models[i][j] == models[i + skip][j]) {
                             models[i + skip][j] += models[i][j];
                             models[i][j] = 0;
+                            composeNums.add(models[i + skip][j]);
                             preTranslateAnimation(i * columnCounts + j, (i + skip) * columnCounts + j, true, Y);
                         } else {
                             if (skip > 1) {
@@ -653,15 +663,15 @@ public class View2048 extends GridLayout {
             }
             int row = point.x;
             int col = point.y;
-            //有新添加的数字，执行缩放动画
-            ObjectAnimator.ofFloat(tvs.get(row * columnCounts + col), "scaleX", 0, 1).setDuration(ANIMATION_TIME).start();
-            ObjectAnimator.ofFloat(tvs.get(row * columnCounts + col), "scaleY", 0, 1).setDuration(ANIMATION_TIME).start();
             models[row][col] = newValue;
             isModelChange = false;
-            getMaxNum();
+            sendComposeNums();
             saveModel();
             cacheModel();
             show();
+            //有新添加的数字，执行缩放动画
+            ObjectAnimator.ofFloat(tvs.get(row * columnCounts + col), "scaleX", 0, 1).setDuration(ANIMATION_TIME).start();
+            ObjectAnimator.ofFloat(tvs.get(row * columnCounts + col), "scaleY", 0, 1).setDuration(ANIMATION_TIME).start();
             //填充完最后一个空检查是否game over
             if (zeroModelPoints.size() == 0) {
                 if (isGameOver()) {
@@ -698,21 +708,12 @@ public class View2048 extends GridLayout {
         }
     }
 
-    private int maxNum;
-
     /**
-     * 查询最大数
+     * 发送结合的数值
      */
-    private void getMaxNum() {
-        for (int[] model : models) {
-            for (int m : model) {
-                if (m > maxNum) {
-                    maxNum = m;
-                }
-            }
-        }
+    private void sendComposeNums() {
         if (onEventListener != null) {
-            onEventListener.maxNum(maxNum);
+            onEventListener.composeNums(composeNums);
         }
     }
 

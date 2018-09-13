@@ -23,6 +23,8 @@ import com.google.android.gms.ads.reward.RewardItem;
 import com.google.android.gms.ads.reward.RewardedVideoAd;
 import com.google.android.gms.ads.reward.RewardedVideoAdListener;
 
+import java.util.List;
+
 public class GameActivity extends AppCompatActivity implements RewardedVideoAdListener, OnEventListener, View.OnClickListener {
     private View2048 view2048;
     private TextView tvScore;
@@ -66,7 +68,6 @@ public class GameActivity extends AppCompatActivity implements RewardedVideoAdLi
             public void onAdClosed() {
                 loadInterstitialAd();
             }
-
         });
 
         view2048 = findViewById(R.id.view2048);
@@ -173,16 +174,30 @@ public class GameActivity extends AppCompatActivity implements RewardedVideoAdLi
         tvHighest.setText(getString(R.string.record) + "\n" + highestScore);
     }
 
-    private int maxNum;
+    /**
+     * 步数计数器，每弹出一次插屏广告时开始计数，当步数大于5步时才会再次弹出广告，防止每走一步都会弹出广告，影响用户体验
+     */
+    private int step = 6;
 
     @Override
-    public void maxNum(int maxNum) {
-        if (this.maxNum != 0 && maxNum > this.maxNum && maxNum % 512 == 0) {
-            if (mInterstitialAd.isLoaded()) {
-                mInterstitialAd.show();
+    public void composeNums(List<Integer> composeNums) {
+        if (step < 6) {
+            step++;
+        }
+        if (composeNums.size() != 0) {
+            int maxComposeNum = 0;
+            for (Integer num : composeNums) {
+                if (num > maxComposeNum) {
+                    maxComposeNum = num;
+                }
+            }
+            if (maxComposeNum % 512 == 0 && step > 5) {
+                if (mInterstitialAd.isLoaded()) {
+                    step = 0;
+                    mInterstitialAd.show();
+                }
             }
         }
-        this.maxNum = maxNum;
     }
 
     @Override
