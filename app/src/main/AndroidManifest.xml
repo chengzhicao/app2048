@@ -29,7 +29,7 @@
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="ca-app-pub-7365304655459838~5623471706" />
 
-        <activity android:name=".AboutActivity"></activity>
+        <activity android:name=".AboutActivity" />
     </application>
 
 </manifest>

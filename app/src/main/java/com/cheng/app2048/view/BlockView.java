@@ -9,6 +9,7 @@ import android.graphics.RectF;
 import android.graphics.Typeface;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
+import android.util.DisplayMetrics;
 import android.util.SparseArray;
 import android.util.TypedValue;
 import android.view.View;
@@ -27,6 +28,9 @@ class BlockView extends View {
     private int sizeMode;
     static final int SIZE_LARGE = 0X00A1;
     static final int SIZE_SMALL = 0X00B1;
+    private DisplayMetrics displayMetrics;
+    static float RXY = 3;
+    private float rxy;
 
     public BlockView(Context context, int sizeMode) {
         this(context, null);
@@ -44,6 +48,8 @@ class BlockView extends View {
     }
 
     private void init() {
+        displayMetrics = mContext.getResources().getDisplayMetrics();
+        rxy = RXY * displayMetrics.density + 0.5f;
         paint = new Paint();
         paint.setAntiAlias(true);
         rectF = new RectF();
@@ -83,25 +89,25 @@ class BlockView extends View {
         preNum = num;
         if (num > 1) {
             paint.setColor(Color.parseColor(colors.get(num > 4096 ? 0 : num)));
-            canvas.drawRoundRect(rectF, 10, 10, paint);
+            canvas.drawRoundRect(rectF, rxy, rxy, paint);
             float textSize;
             if (sizeMode == SIZE_LARGE) {
                 if (num < 10000) {
-                    textSize = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 20, mContext.getResources().getDisplayMetrics());
+                    textSize = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 20, displayMetrics);
                 } else {
-                    textSize = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 18, mContext.getResources().getDisplayMetrics());
+                    textSize = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 18, displayMetrics);
                 }
             } else {
                 if (num < 100) {
-                    textSize = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 18, mContext.getResources().getDisplayMetrics());
+                    textSize = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 18, displayMetrics);
                 } else if (num < 1000) {
-                    textSize = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 14, mContext.getResources().getDisplayMetrics());
+                    textSize = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 14, displayMetrics);
                 } else if (num < 10000) {
-                    textSize = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 11, mContext.getResources().getDisplayMetrics());
+                    textSize = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 12, displayMetrics);
                 } else if (num < 100000) {
-                    textSize = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 9, mContext.getResources().getDisplayMetrics());
+                    textSize = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 10, displayMetrics);
                 } else {
-                    textSize = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 7, mContext.getResources().getDisplayMetrics());
+                    textSize = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 8, displayMetrics);
                 }
             }
             paint.setTextSize(textSize);
@@ -109,9 +115,8 @@ class BlockView extends View {
             paint.setColor(Color.parseColor(num > 4 ? "#f9f6f2" : "#776E65"));
             paint.getTextBounds(value, 0, value.length(), rect);
             paint.setTypeface(Typeface.DEFAULT_BOLD);
-            float valueWidth = rect.right - rectF.left;
-            float valueHeight = rect.bottom = rect.top;
-            canvas.drawText(value, (width - valueWidth) / 2 - 2, (height - valueHeight) / 2, paint);
+            float valueHeight = rect.height();
+            canvas.drawText(value, (width - paint.measureText(value)) / 2, (height - valueHeight) / 2 + valueHeight, paint);
         } else if (num == 1) {
             setBackgroundResource(R.mipmap.ice);
         } else if (num == 0) {

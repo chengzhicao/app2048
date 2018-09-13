@@ -87,7 +87,7 @@ public class View2048 extends GridLayout {
     /**
      * textView之间间隔
      */
-    private int space = 15;
+    private int space;
 
     /**
      * gridView宽
@@ -171,6 +171,8 @@ public class View2048 extends GridLayout {
      */
     private boolean isMerge;
 
+    private float density;
+
     public View2048(Context context) {
         this(context, null);
     }
@@ -200,12 +202,12 @@ public class View2048 extends GridLayout {
     }
 
     private void init() {
+        density = mContext.getResources().getDisplayMetrics().density;
         setWillNotDraw(false);
         soundPool = new SoundPool(1, AudioManager.STREAM_MUSIC, 0);
         mergerSoundId = soundPool.load(mContext, R.raw.merge, 1);
         moveSoundId = soundPool.load(mContext, R.raw.move, 1);
         helper = new SharedPreferencesHelper();
-        setPadding(space, space, space, space);
         initView();
     }
 
@@ -244,6 +246,12 @@ public class View2048 extends GridLayout {
         zeroModelPoints = new ArrayList<>(rowCounts * columnCounts);
         setRowCount(rowCounts);
         setColumnCount(columnCounts);
+        if (rowCounts > 5 && columnCounts > 5) {
+            space = (int) (density * 2 + 0.5f);
+        } else {
+            space = (int) (density * 5 + 0.5f);
+        }
+        setPadding(space, space, space, space);
     }
 
     /**
@@ -327,14 +335,15 @@ public class View2048 extends GridLayout {
         rectF.top = 0;
         rectF.right = viewWidth;
         rectF.bottom = viewHeight;
-        canvas.drawRoundRect(rectF, 10, 10, paint);
+        float rxy = BlockView.RXY * density + 0.5f;
+        canvas.drawRoundRect(rectF, rxy, rxy, paint);
         paint.setColor(Color.parseColor("#CDC1B4"));
         for (PointF pointF : pointFS) {
             rectF.left = pointF.x;
             rectF.top = pointF.y;
             rectF.right = pointF.x + blockSideLength;
             rectF.bottom = pointF.y + blockSideLength;
-            canvas.drawRoundRect(rectF, 10, 10, paint);
+            canvas.drawRoundRect(rectF, rxy, rxy, paint);
         }
     }
 
