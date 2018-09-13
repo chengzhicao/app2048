@@ -83,7 +83,7 @@ public class GameActivity extends AppCompatActivity implements RewardedVideoAdLi
         LinearLayout llGame = findViewById(R.id.ll_game);
         if (gameMode.equals(MainActivity.GAME_MODE_CLASSIC) || gameMode.equals(MainActivity.GAME_MODE_PROP_4X4)
                 || gameMode.equals(MainActivity.GAME_MODE_PROP_4X4_FIXED)) {
-            llGame.setPadding(llGame.getPaddingTop(), llGame.getPaddingTop(), llGame.getPaddingTop(), llGame.getPaddingTop());
+            llGame.setPadding(llGame.getPaddingTop() * 2, llGame.getPaddingTop(), llGame.getPaddingTop() * 2, llGame.getPaddingTop());
         }
 
         if (view2048.isContinueGame()) {

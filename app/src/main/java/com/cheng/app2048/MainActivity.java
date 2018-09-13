@@ -1,7 +1,9 @@
 package com.cheng.app2048;
 
 import android.app.Dialog;
+import android.content.Context;
 import android.content.Intent;
+import android.graphics.Color;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -76,6 +78,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             dialogView.findViewById(R.id.tv_109_fixed).setOnClickListener(this);
             dialogView.findViewById(R.id.tv_109).setOnClickListener(this);
             dialog = new Dialog(this);
+            Context context = dialog.getContext();
+            //去掉低版本dialog上部的蓝色分割线
+            try {
+                int dividerID = context.getResources().getIdentifier("android:id/titleDivider", null, null);
+                View divider = dialog.findViewById(dividerID);
+                divider.setBackgroundColor(Color.TRANSPARENT);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
             dialog.setContentView(dialogView);
             Window window = dialog.getWindow();
             if (window != null) {
