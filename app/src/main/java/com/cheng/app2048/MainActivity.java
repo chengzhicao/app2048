@@ -22,7 +22,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public static final String GAME_MODE_PROP_4X4 = "PropMode_4x4";
     public static final String GAME_MODE_PROP_10X9_FIXED = "PropMode_10x9_fixed";
     public static final String GAME_MODE_PROP_10X9 = "PropMode_10x9";
-    private final String APP_ID = "ca-app-pub-3940256099942544~3347511713";
+    private final String APP_ID = "ca-app-pub-7365304655459838~5623471706";
+    private AdView mAdView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,9 +34,20 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             supportActionBar.hide();
         }
         MobileAds.initialize(this, APP_ID);
-        AdView mAdView = findViewById(R.id.adView);
-        AdRequest adRequest = new AdRequest.Builder().build();
-        mAdView.loadAd(adRequest);
+        mAdView = findViewById(R.id.adView);
+        loadBannerAd();
+    }
+
+    private void loadBannerAd() {
+        if (!mAdView.isLoading()) {
+            mAdView.loadAd(new AdRequest.Builder().build());
+        }
+    }
+
+    @Override
+    protected void onRestart() {
+        super.onRestart();
+        loadBannerAd();
     }
 
     public void mode1(View view) {
@@ -116,5 +128,29 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             this.finish();
             System.exit(0);
         }
+    }
+
+    @Override
+    public void onPause() {
+        if (mAdView != null) {
+            mAdView.pause();
+        }
+        super.onPause();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (mAdView != null) {
+            mAdView.resume();
+        }
+    }
+
+    @Override
+    public void onDestroy() {
+        if (mAdView != null) {
+            mAdView.destroy();
+        }
+        super.onDestroy();
     }
 }

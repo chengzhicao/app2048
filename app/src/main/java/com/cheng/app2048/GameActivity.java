@@ -31,9 +31,11 @@ public class GameActivity extends AppCompatActivity implements RewardedVideoAdLi
     private String gameMode;
     private RewardedVideoAd mRewardedVideoAd;
     private int revokeCounts;
-    private static final String REWARD_AD_UNIT_ID = "ca-app-pub-3940256099942544/5224354917";
-    private static final String INTERSTITIAL_AD_UNIT_ID = "ca-app-pub-3940256099942544/1033173712";
+    private static final String REWARD_AD_UNIT_ID = "ca-app-pub-7365304655459838/5327016287";
+    private static final String INTERSTITIAL_AD_UNIT_ID = "ca-app-pub-7365304655459838/8283543617";
     private Dialog dialog;
+    private AdView mAdView;
+
     /**
      * 插屏广告
      */
@@ -49,9 +51,8 @@ public class GameActivity extends AppCompatActivity implements RewardedVideoAdLi
             supportActionBar.hide();
         }
 
-        AdView mAdView = findViewById(R.id.adView);
-        AdRequest adRequest = new AdRequest.Builder().build();
-        mAdView.loadAd(adRequest);
+        mAdView = findViewById(R.id.adView);
+        loadBannerAd();
 
         mRewardedVideoAd = MobileAds.getRewardedVideoAdInstance(this);
         mRewardedVideoAd.setRewardedVideoAdListener(this);
@@ -59,11 +60,11 @@ public class GameActivity extends AppCompatActivity implements RewardedVideoAdLi
 
         mInterstitialAd = new InterstitialAd(this);
         mInterstitialAd.setAdUnitId(INTERSTITIAL_AD_UNIT_ID);
-        mInterstitialAd.loadAd(new AdRequest.Builder().build());
+        loadInterstitialAd();
         mInterstitialAd.setAdListener(new AdListener() {
             @Override
             public void onAdClosed() {
-                mInterstitialAd.loadAd(new AdRequest.Builder().build());
+                loadInterstitialAd();
             }
 
         });
@@ -110,6 +111,24 @@ public class GameActivity extends AppCompatActivity implements RewardedVideoAdLi
         }
         cbSound.setImageResource(view2048.isPlaySound() ? R.mipmap.sound_on : R.mipmap.sound_off);
         tvHighest.setText(getString(R.string.record) + "\n" + view2048.getHighestScore());
+    }
+
+    private void loadBannerAd() {
+        if (!mAdView.isLoading()) {
+            mAdView.loadAd(new AdRequest.Builder().build());
+        }
+    }
+
+    private void loadInterstitialAd() {
+        if (!mInterstitialAd.isLoading()) {
+            mInterstitialAd.loadAd(new AdRequest.Builder().build());
+        }
+    }
+
+    @Override
+    protected void onRestart() {
+        super.onRestart();
+        loadBannerAd();
     }
 
     public void revoke(View view) {
@@ -269,16 +288,25 @@ public class GameActivity extends AppCompatActivity implements RewardedVideoAdLi
     public void onResume() {
         super.onResume();
         mRewardedVideoAd.resume(this);
+        if (mAdView != null) {
+            mAdView.resume();
+        }
     }
 
     @Override
     public void onPause() {
+        if (mAdView != null) {
+            mAdView.pause();
+        }
         super.onPause();
         mRewardedVideoAd.pause(this);
     }
 
     @Override
     public void onDestroy() {
+        if (mAdView != null) {
+            mAdView.destroy();
+        }
         super.onDestroy();
         mRewardedVideoAd.destroy(this);
     }
