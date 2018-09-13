@@ -20,4 +20,7 @@
     <string name="tip_exit">再按一次退出程序</string>
     <string name="four_four">4x4（随机）</string>
     <string name="ten_nine">10*9（随机）</string>
+    <string name="author">作者：</string>
+    <string name="opinion">意见或反馈：</string>
+    <string name="about">关于</string>
 </resources>

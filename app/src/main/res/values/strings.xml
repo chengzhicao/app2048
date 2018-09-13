@@ -19,4 +19,7 @@
     <string name="tip_exit">Press again and exit.</string>
     <string name="four_four">4x4 (Varied)</string>
     <string name="ten_nine">10*9 (Varied)</string>
+    <string name="author">Author:</string>
+    <string name="opinion">Suggest:</string>
+    <string name="about">About</string>
 </resources>

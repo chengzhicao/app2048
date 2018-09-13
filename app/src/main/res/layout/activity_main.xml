@@ -58,6 +58,17 @@
             android:textColor="@android:color/white"
             android:textStyle="bold" />
 
+        <Button
+            android:layout_width="75dp"
+            android:layout_height="30dp"
+            android:layout_marginTop="25dp"
+            android:background="@drawable/btn_bg_about"
+            android:onClick="about"
+            android:text="@string/about"
+            android:textAllCaps="false"
+            android:textColor="@android:color/white"
+            android:textStyle="bold" />
+
     </LinearLayout>
 
     <com.google.android.gms.ads.AdView

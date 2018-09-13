@@ -153,4 +153,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
         super.onDestroy();
     }
+
+    /**
+     * 关于
+     *
+     * @param view
+     */
+    public void about(View view) {
+        startActivity(new Intent(this, AboutActivity.class));
+    }
 }
