@@ -31,6 +31,15 @@
         android:id="@+id/adView"
         android:layout_width="wrap_content"
         android:layout_height="50dp"
+        android:visibility="gone"
         ads:adSize="BANNER"
+        ads:adUnitId="ca-app-pub-7365304655459838/3508853379" />
+
+    <com.google.android.gms.ads.AdView
+        android:id="@+id/adView_large"
+        android:layout_width="wrap_content"
+        android:layout_height="100dp"
+        android:visibility="gone"
+        ads:adSize="LARGE_BANNER"
         ads:adUnitId="ca-app-pub-7365304655459838/3508853379" />
 </LinearLayout>

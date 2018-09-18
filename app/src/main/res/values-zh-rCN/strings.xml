@@ -4,7 +4,7 @@
     <string name="classical">经典模式</string>
     <string name="challenging">挑战模式</string>
     <string name="prop">道具模式</string>
-    <string name="game_over">游戏结束！</string>
+    <string name="game_over">游戏结束 !</string>
     <string name="restart">重新开始</string>
     <string name="back_home">返回主页</string>
     <string name="new_game">新游戏</string>
@@ -23,4 +23,5 @@
     <string name="author">作者：</string>
     <string name="opinion">意见或反馈：</string>
     <string name="about">关于</string>
+    <string name="thisScore">本局得分：</string>
 </resources>

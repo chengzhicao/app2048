@@ -22,4 +22,5 @@
     <string name="author">Author:</string>
     <string name="opinion">Suggest:</string>
     <string name="about">About</string>
+    <string name="thisScore">Final score:</string>
 </resources>

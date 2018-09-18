@@ -30,13 +30,13 @@ public class GameActivity extends AppCompatActivity implements RewardedVideoAdLi
     private TextView tvScore;
     private TextView tvHighest;
     private ImageView cbSound;
-    private String gameMode;
     private RewardedVideoAd mRewardedVideoAd;
     private int revokeCounts;
     private static final String REWARD_AD_UNIT_ID = "ca-app-pub-7365304655459838/5327016287";
     private static final String INTERSTITIAL_AD_UNIT_ID = "ca-app-pub-7365304655459838/8283543617";
     private Dialog dialog;
     private AdView mAdView;
+    private int score;
 
     /**
      * 插屏广告
@@ -71,7 +71,7 @@ public class GameActivity extends AppCompatActivity implements RewardedVideoAdLi
         });
 
         view2048 = findViewById(R.id.view2048);
-        gameMode = getIntent().getStringExtra(MainActivity.GAME_MODE);
+        String gameMode = getIntent().getStringExtra(MainActivity.GAME_MODE);
         view2048.setGameMode(gameMode);
         view2048.addEventListener(this);
         tvScore = findViewById(R.id.tv_score);
@@ -84,11 +84,17 @@ public class GameActivity extends AppCompatActivity implements RewardedVideoAdLi
         if (gameMode.equals(MainActivity.GAME_MODE_CLASSIC) || gameMode.equals(MainActivity.GAME_MODE_PROP_4X4)
                 || gameMode.equals(MainActivity.GAME_MODE_PROP_4X4_FIXED)) {
             llGame.setPadding(llGame.getPaddingTop() * 2, llGame.getPaddingTop(), llGame.getPaddingTop() * 2, llGame.getPaddingTop());
+            mAdView = findViewById(R.id.adView_large);
+        } else {
+            mAdView = findViewById(R.id.adView);
         }
+        mAdView.setVisibility(View.VISIBLE);
+        loadBannerAd();
 
         if (view2048.isContinueGame()) {
             view2048.continueGame();
-            tvScore.setText(getString(R.string.score) + "\n" + view2048.getScore());
+            score = view2048.getScore();
+            tvScore.setText(getString(R.string.score) + "\n" + score);
         } else if (gameMode != null) {
             switch (gameMode) {
                 case MainActivity.GAME_MODE_CLASSIC:
@@ -130,7 +136,7 @@ public class GameActivity extends AppCompatActivity implements RewardedVideoAdLi
     @Override
     protected void onRestart() {
         super.onRestart();
-        loadBannerAd();
+//        loadBannerAd();
     }
 
     public void revoke(View view) {
@@ -159,6 +165,7 @@ public class GameActivity extends AppCompatActivity implements RewardedVideoAdLi
     }
 
     public void newGame(View view) {
+        this.score = 0;
         view2048.newGame();
         tvScore.setText(getString(R.string.score) + "\n" + 0);
         revokeCounts = 0;
@@ -166,6 +173,7 @@ public class GameActivity extends AppCompatActivity implements RewardedVideoAdLi
 
     @Override
     public void scoreListener(int score) {
+        this.score = score;
         tvScore.setText(getString(R.string.score) + "\n" + score);
     }
 
@@ -206,6 +214,8 @@ public class GameActivity extends AppCompatActivity implements RewardedVideoAdLi
             View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_gameover, null);
             dialogView.findViewById(R.id.tv_newgame).setOnClickListener(this);
             dialogView.findViewById(R.id.tv_backmenu).setOnClickListener(this);
+            TextView tvFinalScore = dialogView.findViewById(R.id.tv_final_score);
+            tvFinalScore.setText(getString(R.string.thisScore) + " " + score);
             dialog = new Dialog(this);
             dialog.setContentView(dialogView);
         }

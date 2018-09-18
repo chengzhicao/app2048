@@ -18,10 +18,17 @@
         android:textSize="25sp"
         android:textStyle="bold" />
 
+    <TextView
+        android:id="@+id/tv_final_score"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/thisScore"
+        android:textColor="@android:color/white" />
+
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="20dp">
+        android:layout_marginTop="10dp">
 
         <TextView
             android:id="@+id/tv_newgame"

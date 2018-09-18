@@ -49,7 +49,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     protected void onRestart() {
         super.onRestart();
-        loadBannerAd();
+//        loadBannerAd();
     }
 
     public void mode1(View view) {
