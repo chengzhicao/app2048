@@ -1,8 +1,9 @@
 package com.cheng.app2048;
 
-import android.support.v7.app.ActionBar;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AppCompatActivity;
 
 public class AboutActivity extends AppCompatActivity {
 
