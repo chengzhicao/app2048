@@ -29,7 +29,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public static final String GAME_MODE_PROP_4X4 = "PropMode_4x4";
     public static final String GAME_MODE_PROP_10X9_FIXED = "PropMode_10x9_fixed";
     public static final String GAME_MODE_PROP_10X9 = "PropMode_10x9";
-    private static final String BANNER_AD_UNIT_ID = "ca-app-pub-3940256099942544/6300978111";
+    private static final String BANNER_AD_UNIT_ID = "ca-app-pub-7365304655459838/3508853379";
     private AdView mAdView;
 
     @Override

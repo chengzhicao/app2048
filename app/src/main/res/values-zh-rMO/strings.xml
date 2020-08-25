@@ -2,7 +2,7 @@
     <string name="app_name">挑戰2048</string>
     <string name="classical">經典模式</string>
     <string name="challenging">挑战模式</string>
-    <string name="prop">道具模式</string>
+    <string name="obstacle">障礙模式</string>
     <string name="game_over">遊戲結束 !</string>
     <string name="restart">重新開始</string>
     <string name="back_home">返回主頁</string>

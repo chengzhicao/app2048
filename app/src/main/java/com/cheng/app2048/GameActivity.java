@@ -41,9 +41,9 @@ public class GameActivity extends AppCompatActivity implements OnEventListener, 
     private ImageView cbSound;
     private RewardedAd mRewardedAd;
     private int revokeCounts;
-    private static final String BANNER_AD_UNIT_ID = "ca-app-pub-3940256099942544/6300978111";
-    private static final String REWARD_AD_UNIT_ID = "ca-app-pub-3940256099942544/5224354917";
-    private static final String INTERSTITIAL_AD_UNIT_ID = "ca-app-pub-3940256099942544/1033173712";
+    private static final String BANNER_AD_UNIT_ID = "ca-app-pub-7365304655459838/3508853379";
+    private static final String REWARD_AD_UNIT_ID = "ca-app-pub-7365304655459838/5327016287";
+    private static final String INTERSTITIAL_AD_UNIT_ID = "ca-app-pub-7365304655459838/8283543617";
     private Dialog dialog;
     private AdView mAdView;
     private int score;
@@ -211,7 +211,7 @@ public class GameActivity extends AppCompatActivity implements OnEventListener, 
                     maxComposeNum = num;
                 }
             }
-            if (maxComposeNum % 32 == 0 && step > 5) {
+            if (maxComposeNum % 512 == 0 && step > 5) {
                 if (mInterstitialAd.isLoaded()) {
                     step = 0;
                     mInterstitialAd.show();

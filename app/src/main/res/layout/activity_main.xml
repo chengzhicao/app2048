@@ -54,7 +54,7 @@
             android:layout_marginTop="20dp"
             android:background="@drawable/btn_bg_prop"
             android:onClick="mode3"
-            android:text="@string/prop"
+            android:text="@string/obstacle"
             android:textAllCaps="false"
             android:textColor="@android:color/white"
             android:textStyle="bold" />

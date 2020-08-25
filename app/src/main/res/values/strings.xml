@@ -2,7 +2,7 @@
     <string name="app_name">Challenge 2048</string>
     <string name="classical">Classical</string>
     <string name="challenging">Challenging</string>
-    <string name="prop">Prop</string>
+    <string name="obstacle">Obstacle</string>
     <string name="game_over">Game Over !</string>
     <string name="restart">Restart</string>
     <string name="back_home">Home</string>
