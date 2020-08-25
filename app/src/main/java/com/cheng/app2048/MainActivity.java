@@ -5,15 +5,19 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.util.DisplayMetrics;
+import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.Window;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdSize;
 import com.google.android.gms.ads.AdView;
 import com.google.android.gms.ads.MobileAds;
 
@@ -25,7 +29,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public static final String GAME_MODE_PROP_4X4 = "PropMode_4x4";
     public static final String GAME_MODE_PROP_10X9_FIXED = "PropMode_10x9_fixed";
     public static final String GAME_MODE_PROP_10X9 = "PropMode_10x9";
-    private final String APP_ID = "ca-app-pub-7365304655459838~5623471706";
+    private static final String BANNER_AD_UNIT_ID = "ca-app-pub-3940256099942544/6300978111";
     private AdView mAdView;
 
     @Override
@@ -36,15 +40,25 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         if (supportActionBar != null) {
             supportActionBar.hide();
         }
-        MobileAds.initialize(this, APP_ID);
-        mAdView = findViewById(R.id.adView);
-        loadBannerAd();
+        MobileAds.initialize(this);
+        mAdView = new AdView(this);
+        mAdView.setAdSize(getAdSize());
+        mAdView.setAdUnitId(BANNER_AD_UNIT_ID);
+        ((LinearLayout)findViewById(R.id.ll_content)).addView(mAdView);
+        mAdView.loadAd(new AdRequest.Builder().build());
     }
 
-    private void loadBannerAd() {
-        if (!mAdView.isLoading()) {
-            mAdView.loadAd(new AdRequest.Builder().build());
-        }
+    private AdSize getAdSize() {
+        Display display = getWindowManager().getDefaultDisplay();
+        DisplayMetrics outMetrics = new DisplayMetrics();
+        display.getMetrics(outMetrics);
+
+        float widthPixels = outMetrics.widthPixels;
+        float density = outMetrics.density;
+
+        int adWidth = (int) (widthPixels / density);
+
+        return AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(this, adWidth);
     }
 
     @Override
@@ -138,7 +152,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             mPressedTime = mNowTime;
         } else {//退出程序
             this.finish();
-            System.exit(0);
         }
     }
 

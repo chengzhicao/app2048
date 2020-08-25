@@ -3,6 +3,7 @@
     xmlns:ads="http://schemas.android.com/apk/res-auto"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/ll_content"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#F7EDE4"
@@ -18,8 +19,8 @@
         android:layout_height="0dp"
         android:layout_weight="1"
         android:gravity="center_horizontal"
-        android:paddingBottom="10dp"
-        android:paddingTop="10dp">
+        android:paddingTop="10dp"
+        android:paddingBottom="10dp">
 
         <com.cheng.app2048.view.View2048
             android:id="@+id/view2048"
@@ -27,19 +28,4 @@
             android:layout_height="match_parent" />
     </LinearLayout>
 
-    <com.google.android.gms.ads.AdView
-        android:id="@+id/adView"
-        android:layout_width="wrap_content"
-        android:layout_height="50dp"
-        android:visibility="gone"
-        ads:adSize="BANNER"
-        ads:adUnitId="ca-app-pub-7365304655459838/3508853379" />
-
-    <com.google.android.gms.ads.AdView
-        android:id="@+id/adView_large"
-        android:layout_width="wrap_content"
-        android:layout_height="100dp"
-        android:visibility="gone"
-        ads:adSize="LARGE_BANNER"
-        ads:adUnitId="ca-app-pub-7365304655459838/3508853379" />
 </LinearLayout>
