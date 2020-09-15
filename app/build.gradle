@@ -11,16 +11,6 @@ android {
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
     }
 
-    signingConfigs {
-        release {
-            storeFile file("app2048.jks")
-            storePassword "cheng123456"
-            keyAlias "key0"
-            keyPassword "cheng123456"
-        }
-
-    }
-
     buildTypes {
         release {
             minifyEnabled true
